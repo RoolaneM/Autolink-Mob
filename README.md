@@ -1,50 +1,174 @@
-# Welcome to your Expo app 👋
+# 🚗 AutoLinkMoz - App de Venda de Carros B2C
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+App completo de venda de carros desenvolvido em React Native com Expo.
 
-## Get started
+## 📱 Funcionalidades
 
-1. Install dependencies
+✅ **Home Feed** - Carros em destaque e recentes
+✅ **Busca e Filtros** - Busca por marca/modelo com filtros avançados
+✅ **Favoritos** - Sistema de favoritos persistente
+✅ **Detalhes do Carro** - Galeria de fotos, especificações, opcionais
+✅ **Perfil do Usuário** - Gerenciamento de conta e preferências
+✅ **Integração WhatsApp** - Contato direto com vendedor
+✅ **Simulação de Financiamento** - Cálculo de parcelas
+✅ **Agendamento Test Drive** - Sistema de agendamento
 
-   ```bash
-   npm install
-   ```
+## 🚀 Como Executar
 
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+### 1. Instalação das Dependências
 
 ```bash
-npm run reset-project
+cd carros-app
+npm install
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### 2. Iniciar o Projeto
 
-## Learn more
+```bash
+npx expo start
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+### 3. Executar no Dispositivo
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+- **Android**: Pressione `a` no terminal ou escaneie o QR Code com o app Expo Go
+- **iOS**: Pressione `i` no terminal ou escaneie o QR Code com a câmera
+- **Web**: Pressione `w` no terminal
 
-## Join the community
+## 📁 Estrutura de Arquivos
 
-Join our community of developers creating universal apps.
+```
+carros-app/
+├── app/
+│   ├── (tabs)/              # Navegação em abas
+│   │   ├── _layout.tsx      # Layout das tabs
+│   │   ├── index.tsx        # Home
+│   │   ├── buscar.tsx       # Busca
+│   │   ├── favoritos.tsx    # Favoritos
+│   │   └── perfil.tsx       # Perfil
+│   └── detalhes/
+│       └── [id].tsx         # Detalhes do carro (dinâmico)
+├── components/              # Componentes reutilizáveis
+│   ├── CarCard.tsx
+│   ├── SearchBar.tsx
+│   ├── FilterBar.tsx
+│   ├── ImageGallery.tsx
+│   ├── SpecsList.tsx
+│   └── PriceCard.tsx
+├── store/
+│   └── useCarStore.ts       # Gerenciamento de estado (Zustand)
+├── types/
+│   └── index.ts             # TypeScript types
+├── constants/
+│   ├── Colors.ts            # Cores e tema
+│   └── data.ts              # Dados mockados
+└── utils/                   # Utilitários (futuro)
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## 🎨 Design System
+
+### Cores
+- **Primary**: #FF6B35 (Laranja)
+- **Secondary**: #2C3E50 (Azul escuro)
+- **Background**: #F8F9FA
+- **Surface**: #FFFFFF
+- **Text**: #2C3E50
+
+### Componentes Principais
+
+#### CarCard
+Card de exibição de carro na listagem com:
+- Imagem principal
+- Badge de destaque
+- Botão de favoritar
+- Informações básicas (ano, km, combustível)
+- Preço e transmissão
+
+#### SearchBar
+Barra de busca com:
+- Input de texto
+- Ícone de busca
+- Botão de limpar
+- Botão de filtros
+
+#### FilterBar
+Filtros rápidos em chips horizontais
+
+#### ImageGallery
+Galeria de imagens com:
+- Navegação por setas
+- Thumbnails
+- Contador de fotos
+
+#### SpecsList
+Lista de especificações técnicas e opcionais
+
+#### PriceCard
+Card de preço fixo na parte inferior com:
+- Preço à vista
+- Simulação de parcelas
+- Botões de ação (Test Drive e Contatar)
+
+## 🔧 Tecnologias Utilizadas
+
+- **React Native** - Framework mobile
+- **Expo** - Plataforma de desenvolvimento
+- **Expo Router** - Navegação baseada em arquivos
+- **Zustand** - Gerenciamento de estado
+- **TypeScript** - Tipagem estática
+- **Expo Linear Gradient** - Gradientes
+- **Expo Image** - Otimização de imagens
+
+## 📊 Dados Mockados
+
+O app vem com 8 carros mockados incluindo:
+- Toyota Corolla XEi
+- Jeep Compass Longitude
+- Volkswagen Golf GTI
+- Honda Civic Touring
+- Chevrolet Onix Plus
+- Hyundai Creta
+- Fiat Toro Ranch
+- Nissan Kicks
+
+## 🎯 Próximos Passos
+
+Para continuar o desenvolvimento, você pode:
+
+1. **Integrar API Real**
+   - Substituir dados mockados por API
+   - Implementar autenticação
+   - Sistema de upload de imagens
+
+2. **Adicionar Páginas**
+   - Filtros avançados completos
+   - Página de financiamento funcional
+   - Sistema de agendamento completo
+   - Comparação de carros
+
+3. **Melhorias**
+   - Animações com Reanimated
+   - Cache de imagens
+   - Push notifications
+   - Sistema de chat com vendedor
+
+## 📝 Notas Importantes
+
+- Os dados são mockados e resetam ao reiniciar o app
+- As funcionalidades de WhatsApp e ligação funcionam apenas em dispositivos reais
+- O sistema de favoritos é local (não persiste entre sessões por enquanto)
+
+## 🤝 Contribuindo
+
+Sinta-se à vontade para expandir o app adicionando:
+- Novas features
+- Melhorias de UI/UX
+- Testes unitários
+- Documentação adicional
+
+## 📄 Licença
+
+Projeto desenvolvido para fins educacionais.
+
+---
+
+**Desenvolvido com ❤️ usando React Native + Expo**
