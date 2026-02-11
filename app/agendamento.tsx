@@ -1,14 +1,14 @@
+import AlertCard from '@/components/AlertCard';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
-    Alert,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BorderRadius, Colors, FontSize, FontWeight, Spacing } from '../constants/Colors';
@@ -49,22 +49,49 @@ export default function AgendamentoScreen() {
     '17:00',
   ];
 
+  const [alertConfig, setAlertConfig] = useState<{
+    visible: boolean;
+    title: string;
+    message: string;
+    actions: any[];
+  }>({
+    visible: false,
+    title: '',
+    message: '',
+    actions: [],
+  });
+
+
   const handleSubmit = () => {
     if (!formData.nome || !formData.telefone || !formData.data || !formData.horario) {
-      Alert.alert('Atenção', 'Por favor, preencha todos os campos obrigatórios.');
+      setAlertConfig({
+        visible: true,
+        title: 'Atenção',
+        message: 'Por favor, preencha todos os campos obrigatórios.',
+        actions: [
+          {
+            label: 'OK',
+            type: 'primary',
+            onPress: () => { },
+          },
+        ],
+      });
       return;
     }
 
-    Alert.alert(
-      'Test Drive Agendado!',
-      `Seu test drive foi agendado para ${formData.data} às ${formData.horario}. Entraremos em contato em breve!`,
-      [
+    setAlertConfig({
+      visible: true,
+      title: 'Test Drive Agendado!',
+      message: `Seu test drive foi agendado para ${formData.data} às ${formData.horario}. Entraremos em contato em breve!`,
+      actions: [
         {
-          text: 'OK',
+          label: 'OK',
+          type: 'primary',
           onPress: () => router.back(),
         },
-      ]
-    );
+      ],
+    });
+
   };
 
   return (
@@ -241,6 +268,20 @@ export default function AgendamentoScreen() {
           <Text style={styles.submitButtonText}>Confirmar Agendamento</Text>
         </TouchableOpacity>
       </View>
+
+      <AlertCard
+        visible={alertConfig.visible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        actions={alertConfig.actions}
+        onClose={() =>
+          setAlertConfig((prev) => ({
+            ...prev,
+            visible: false,
+          }))
+        }
+      />
+
     </SafeAreaView>
   );
 }

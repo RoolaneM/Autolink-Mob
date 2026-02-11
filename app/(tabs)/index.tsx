@@ -5,7 +5,6 @@ import React, { useState } from 'react';
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Image, } from 'react-native';
 import CarCard from '../../components/CarCard';
 import FilterBar from '../../components/FilterBar';
 import { Colors, FontSize, FontWeight, Spacing } from '../../constants/Colors';
@@ -61,31 +60,27 @@ export default function HomeScreen() {
         }
         style={styles.header}
       >
-        <View style={styles.headerContent}>
+        <View style={styles.header}>
+          <View style={styles.headerContent}>
+            {/* <Image
+              source={require('../../assets/images/iconbranco.png')}
+              style={styles.logo}
+              resizeMode="contain"
+            /> */}
+            <View>
+              <Text style={styles.headerTitle}>AutoLink MZ</Text>
+              {/*               <Text style={styles.headerSubtitle}>Encontre o carro dos seus sonhos</Text> */}
+            </View>
 
-          {/* Logo */}
-          <Image
-            source={require('../../assets/images/logo.png')} // ajuste o caminho
-            style={styles.logo}
-            resizeMode="contain"
-          />
-
-          {/* Botão de Mensagem */}
-          <TouchableOpacity
-            style={styles.messageButton}
-            onPress={() => {
-              // navegação para chat
-              // navigation.navigate('Chat')
-            }}
-          >
-            <Ionicons
-              name="chatbubble-outline"
-              size={24}
-              color="#FFFFFF" // branco
-            />
-          </TouchableOpacity>
-
+            <TouchableOpacity
+              style={styles.messageButton}
+              onPress={() => router.push('/mensagem/chat')}
+            >
+              <Ionicons name="chatbubble-outline" size={24} color="#FFFFFF" />
+            </TouchableOpacity>
+          </View>
         </View>
+
       </LinearGradient>
 
       {/* Filtros de Categoria */}
@@ -137,42 +132,48 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
+  /*   header: {
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+      flexDirection: 'row',
+      alignItems: 'center',
+    }, */
+
   header: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
+    paddingVertical: 8,
   },
 
   headerContent: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    width: '100%', // 👈 garante ocupação total da largura
   },
 
   logo: {
-    width: 120,   // ajuste conforme sua logo
+    width: 120,
     height: 40,
   },
 
   messageButton: {
     padding: 8,
-    borderRadius: 20,
+    marginLeft: 12,
   },
 
 
-
-  /* headerTitle: {
-    fontSize: FontSize.xxxl,
+  headerTitle: {
+    fontSize: 25, // ajuste aqui
     fontWeight: FontWeight.bold,
     color: Colors.surface,
   },
+
   headerSubtitle: {
     fontSize: FontSize.md,
     color: Colors.surface,
     opacity: 0.9,
     marginTop: 4,
-  }, */
+  },
   notificationButton: {
     width: 40,
     height: 40,
@@ -214,15 +215,5 @@ const styles = StyleSheet.create({
   logoContainer: {
     justifyContent: 'center',
   },
-/* 
-  logo: {
-    width: 120,
-    height: 80,
-  },
-
-  messageButton: {
-    padding: 8,
-    borderRadius: 20,
-  } */
 
 });

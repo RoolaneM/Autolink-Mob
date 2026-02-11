@@ -1,14 +1,14 @@
+import AlertCard from '@/components/AlertCard';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
-  Alert,
   FlatList,
   Image,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BorderRadius, Colors, FontSize, FontWeight, Spacing } from '../../constants/Colors';
@@ -102,11 +102,19 @@ export default function TestesAgendadosScreen() {
     }
   };
 
+  const [alertConfig, setAlertConfig] = useState({
+    visible: false,
+    title: '',
+    message: '',
+    actions: [] as any[],
+  });
+
   const handleCancelar = (id: string) => {
-    Alert.alert(
-      'Cancelar Test Drive',
-      'Tem certeza que deseja cancelar este agendamento?',
-      [
+    setAlertConfig({
+      visible: true,
+      title: 'Cancelar Test Drive',
+      message: 'Tem certeza que deseja cancelar este agendamento?',
+      actions: [
         { text: 'Não', style: 'cancel' },
         {
           text: 'Sim, Cancelar',
@@ -118,7 +126,8 @@ export default function TestesAgendadosScreen() {
           },
         },
       ]
-    );
+    });
+      
   };
 
   const handleReagendar = () => {
@@ -236,6 +245,20 @@ export default function TestesAgendadosScreen() {
           </View>
         }
       />
+
+      <AlertCard
+        visible={alertConfig.visible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        actions={alertConfig.actions}
+        onClose={() =>
+          setAlertConfig((prev) => ({
+            ...prev,
+            visible: false,
+          }))
+        }
+      />
+
     </SafeAreaView>
   );
 }

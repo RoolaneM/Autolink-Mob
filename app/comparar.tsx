@@ -1,14 +1,14 @@
+import AlertCard from '@/components/AlertCard';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
-    Alert,
     Image,
     ScrollView,
     StyleSheet,
     Text,
     TouchableOpacity,
-    View,
+    View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BorderRadius, Colors, FontSize, FontWeight, Spacing } from '../constants/Colors';
@@ -22,11 +22,30 @@ export default function CompararScreen() {
     const [carrosSelecionados, setCarrosSelecionados] = useState<Car[]>([]);
     const [mostrarSelecao, setMostrarSelecao] = useState(true);
 
+    const [alertConfig, setAlertConfig] = useState({
+        visible: false,
+        title: '',
+        message: '',
+        actions: [] as any[],
+    });
+
     const adicionarCarro = (car: Car) => {
         if (carrosSelecionados.length >= 3) {
-            Alert.alert('Limite atingido', 'Você pode comparar no máximo 3 carros.');
+            setAlertConfig({
+                visible: true,
+                title: 'Limite atingido',
+                message: 'Você pode comparar no máximo 3 carros.',
+                actions: [
+                    {
+                        label: 'Entendi',
+                        type: 'primary',
+                        onPress: () => setAlertConfig({ ...alertConfig, visible: false }),
+                    },
+                ],
+            });
             return;
         }
+
         if (carrosSelecionados.find((c) => c.id === car.id)) {
             return;
         }
@@ -241,6 +260,21 @@ export default function CompararScreen() {
 
             {/* Tabela de Comparação */}
             <View style={styles.comparisonSection}>{renderComparacao()}</View>
+
+            {/* Alert */}
+            <AlertCard
+                visible={alertConfig.visible}
+                title={alertConfig.title}
+                message={alertConfig.message}
+                actions={alertConfig.actions}
+                onClose={() =>
+                    setAlertConfig((prev) => ({
+                        ...prev,
+                        visible: false,
+                    }))
+                }
+            />
+
         </SafeAreaView>
     );
 }

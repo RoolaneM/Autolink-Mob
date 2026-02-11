@@ -1,45 +1,73 @@
+import AlertCard from '@/components/AlertCard';
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  Alert,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BorderRadius, Colors, FontSize, FontWeight, Spacing } from '../../constants/Colors';
+import { useAuth } from '../../context/AuthContext';
+
 
 export default function MeusDadosScreen() {
+  const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
-  const [user, setUser] = useState({
-    nome: 'Roolane Matsombe',
-    email: 'romatsombe@email.com',
-    telefone: '+258 84 000 0000',
-    cidade: 'Maputo',
-    dataCadastro: '10 Jan 2024',
+  const [formData, setFormData] = useState({
+    nome: '',
+    email: '',
+    telefone: '',
+    cidade: '',
+    dataCadastro: '',
   });
 
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        nome: user.name || '',
+        email: user.email || '',
+        telefone: user.phone || '',
+        cidade: '', // se vier do backend depois
+        dataCadastro: '', // pode formatar createdAt depois
+      });
+    }
+  }, [user]);
+
+
+  const [alertConfig, setAlertConfig] = useState({
+    visible: false,
+    title: '',
+    message: '',
+    actions: [] as any[],
+  });
+
+
   const handleSave = () => {
-    Alert.alert('Sucesso', 'Dados atualizados com sucesso!', [
-      {
-        text: 'OK',
-        onPress: () => setIsEditing(false),
-      },
-    ]);
+    setAlertConfig({
+      visible: true,
+      title: 'Sucesso',
+      message: 'Dados atualizados com sucesso!',
+      actions: [
+        {
+          text: 'OK',
+        },
+      ],
+    });
   };
 
   const handleCancel = () => {
     setIsEditing(false);
     // Reset para valores originais
-    setUser({
-      nome: 'Roolane Matsombe',
-      email: 'romatsombe@email.com',
-      telefone: '+258 84 000 0000',
-      cidade: 'Maputo',
-      dataCadastro: '10 Jan 2024',
+    setFormData({
+      nome: user?.name || '',
+      email: user?.email || '',
+      telefone: user?.phone || '',
+      cidade: '', // se vier do backend depois
+      dataCadastro: '', // pode formatar createdAt depois
     });
   };
 
@@ -75,41 +103,41 @@ export default function MeusDadosScreen() {
           <DataField
             icon="person-outline"
             label="Nome Completo"
-            value={user.nome}
+            value={formData.nome}
             editable={isEditing}
-            onChangeText={(text) => setUser({ ...user, nome: text })}
+            onChangeText={(text) => setFormData({ ...formData, nome: text })}
           />
 
           <DataField
             icon="mail-outline"
             label="Email"
-            value={user.email}
+            value={formData.email}
             editable={isEditing}
-            onChangeText={(text) => setUser({ ...user, email: text })}
+            onChangeText={(text) => setFormData({ ...formData, email: text })}
             keyboardType="email-address"
           />
 
           <DataField
             icon="call-outline"
             label="Telefone"
-            value={user.telefone}
+            value={formData.telefone}
             editable={isEditing}
-            onChangeText={(text) => setUser({ ...user, telefone: text })}
+            onChangeText={(text) => setFormData({ ...formData, telefone: text })}
             keyboardType="phone-pad"
           />
 
           <DataField
             icon="location-outline"
             label="Cidade"
-            value={user.cidade}
+            value={formData.cidade}
             editable={isEditing}
-            onChangeText={(text) => setUser({ ...user, cidade: text })}
+            onChangeText={(text) => setFormData({ ...formData, cidade: text })}
           />
 
           <DataField
             icon="calendar-outline"
             label="Membro desde"
-            value={user.dataCadastro}
+            value={formData.dataCadastro}
             editable={false}
           />
         </View>
@@ -159,6 +187,20 @@ export default function MeusDadosScreen() {
             </TouchableOpacity>
           </View>
         )}
+
+        <AlertCard
+          visible={alertConfig.visible}
+          title={alertConfig.title}
+          message={alertConfig.message}
+          actions={alertConfig.actions}
+          onClose={() =>
+            setAlertConfig((prev) => ({
+              ...prev,
+              visible: false,
+            }))
+          }
+        />
+
       </ScrollView>
     </SafeAreaView>
   );

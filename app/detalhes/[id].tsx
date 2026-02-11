@@ -1,7 +1,8 @@
+import AlertCard from '@/components/AlertCard';
 import { Ionicons } from '@expo/vector-icons';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
-import React from 'react';
-import { Alert, Linking, ScrollView, Share, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useState } from 'react';
+import { Linking, ScrollView, Share, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import CarDetails from '../../components/CarDetails';
 import { BorderRadius, Colors, FontSize, FontWeight, Spacing } from '../../constants/Colors';
 import { CARROS_MOCK } from '../../constants/data';
@@ -68,20 +69,29 @@ export default function DetalhesPage() {
         }
     };
 
+    const [alertConfig, setAlertConfig] = useState({
+        visible: false,
+        title: '',
+        message: '',
+        actions: [] as any[],
+    });
+
+
     const handlePedido = () => {
-        Alert.alert(
-            'Fazer Pedido',
-            `Deseja fazer um pedido para o ${car.marca} ${car.modelo}?`,
-            [
+        setAlertConfig({
+            visible: true,
+            title: 'Fazer Pedido',
+            message: `Deseja fazer um pedido para o ${car.marca} ${car.modelo}?`,
+            actions: [
                 { text: 'Cancelar', style: 'cancel' },
                 {
                     text: 'Confirmar',
-                /*     onPress: () => {
-                        router.push(`/historico/${car.id}`);
-                    }, */
+                    /*     onPress: () => {
+                            router.push(`/historico/${car.id}`);
+                        }, */
                 },
             ]
-        );
+        });
     };
 
     return (
@@ -167,6 +177,20 @@ export default function DetalhesPage() {
                     </TouchableOpacity>
                 </View>
             </View>
+
+            <AlertCard
+                visible={alertConfig.visible}
+                title={alertConfig.title}
+                message={alertConfig.message}
+                actions={alertConfig.actions}
+                onClose={() =>
+                    setAlertConfig((prev) => ({
+                        ...prev,
+                        visible: false,
+                    }))
+                }
+            />
+
         </>
     );
 }

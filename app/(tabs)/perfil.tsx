@@ -1,13 +1,29 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BorderRadius, Colors, FontSize, FontWeight, Spacing } from '../../constants/Colors';
+import { useAuth } from '../../context/AuthContext';
 
 
 export default function PerfilScreen() {
+  const { user, logout, isLoading } = useAuth();
+
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.replace('/login');
+    }
+  }, [user, isLoading]);
+
+  if (isLoading) {
+    return null; // ou um loading
+  }
+
+  if (!user) {
+    return null; // evita renderizar enquanto redireciona
+  }
   const menuItems = [
     {
       id: '1',
@@ -68,9 +84,15 @@ export default function PerfilScreen() {
             </TouchableOpacity>
           </View>
 
-          <Text style={styles.userName}>Roolane Matsombe</Text>
-          <Text style={styles.userEmail}>romatsombe@email.com</Text>
-{/* 
+          <Text style={styles.userName}>
+            {user?.name ?? 'Usuário'}
+          </Text>
+
+          <Text style={styles.userEmail}>
+            {user?.email ?? ''}
+          </Text>
+
+          {/* 
           <TouchableOpacity style={styles.editProfileButton}>
             <Text style={styles.editProfileText}>Editar Perfil</Text>
           </TouchableOpacity> */}
@@ -118,7 +140,10 @@ export default function PerfilScreen() {
         {/* Logout Button */}
         <TouchableOpacity
           style={styles.logoutButton}
-          onPress={() => console.log('Logout')}
+          onPress={() => {
+            logout();
+            router.push('/login');
+          }}
         >
           <Ionicons name="log-out-outline" size={20} color={Colors.error} />
           <Text style={styles.logoutText}>Sair da Conta</Text>

@@ -1,17 +1,19 @@
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import React, { useState } from 'react';
 import {
-  Alert,
   Linking,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import AlertCard from '../components/AlertCard';
 import { BorderRadius, Colors, FontSize, FontWeight, Spacing } from '../constants/Colors';
+
 
 interface FAQItem {
   id: string;
@@ -75,26 +77,48 @@ export default function AjudaScreen() {
       item.answer.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const [alertConfig, setAlertConfig] = useState<{
+    visible: boolean;
+    title: string;
+    message: string;
+    actions: any[];
+  }>({
+    visible: false,
+    title: '',
+    message: '',
+    actions: [],
+  });
+
   const handleContactSupport = () => {
-    Alert.alert(
-      'Falar com Suporte',
-      'Como você gostaria de entrar em contato?',
-      [
+    setAlertConfig({
+      visible: true,
+      title: 'Falar com Suporte',
+      message: 'Como você gostaria de entrar em contato?',
+      actions: [
         {
-          text: 'WhatsApp',
-          onPress: () => Linking.openURL('https://wa.me/258840000000'),
+          label: 'WhatsApp',
+          type: 'primary',
+          onPress: () =>
+            Linking.openURL('https://wa.me/258840000000'),
         },
         {
-          text: 'Email',
-          onPress: () => Linking.openURL('mailto:suporte@autolinkmz.co.mz'),
+          label: 'Email',
+          onPress: () =>
+            Linking.openURL('mailto:suporte@autolinkmz.co.mz'),
         },
         {
-          text: 'Telefone',
-          onPress: () => Linking.openURL('tel:+258840000000'),
+          label: 'Telefone',
+          onPress: () =>
+            Linking.openURL('tel:+258840000000'),
         },
-        { text: 'Cancelar', style: 'cancel' },
-      ]
-    );
+        {
+          label: 'Cancelar',
+          type: 'danger',
+          onPress: () => setAlertConfig({ ...alertConfig, visible: false }),
+        },
+      ],
+    });
+
   };
 
   const toggleExpand = (id: string) => {
@@ -207,19 +231,28 @@ export default function AjudaScreen() {
         <View style={styles.resourcesSection}>
           <Text style={styles.sectionTitle}>Outros Recursos</Text>
 
-          <TouchableOpacity style={styles.resourceItem}>
+          <TouchableOpacity
+            style={styles.resourceItem}
+            onPress={() => router.push('/termos')}
+          >
             <Ionicons name="document-text-outline" size={22} color={Colors.primary} />
             <Text style={styles.resourceText}>Termos de Uso</Text>
             <Ionicons name="chevron-forward" size={20} color={Colors.textLight} />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.resourceItem}>
+          <TouchableOpacity
+            style={styles.resourceItem}
+            onPress={() => router.push('/politicas')}
+          >
             <Ionicons name="shield-checkmark-outline" size={22} color={Colors.primary} />
             <Text style={styles.resourceText}>Política de Privacidade</Text>
             <Ionicons name="chevron-forward" size={20} color={Colors.textLight} />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.resourceItem}>
+          <TouchableOpacity
+            style={styles.resourceItem}
+            onPress={() => router.push('/sobre')}
+          >
             <Ionicons name="information-circle-outline" size={22} color={Colors.primary} />
             <Text style={styles.resourceText}>Sobre Nós</Text>
             <Ionicons name="chevron-forward" size={20} color={Colors.textLight} />
@@ -234,6 +267,7 @@ export default function AjudaScreen() {
             <Ionicons name="chevron-forward" size={20} color={Colors.textLight} />
           </TouchableOpacity>
         </View>
+
 
         {/* Contato Final */}
         <View style={styles.finalContact}>
@@ -268,6 +302,20 @@ export default function AjudaScreen() {
             </TouchableOpacity>
           </View>
         </View>
+
+        <AlertCard
+          visible={alertConfig.visible}
+          title={alertConfig.title}
+          message={alertConfig.message}
+          actions={alertConfig.actions}
+          onClose={() =>
+            setAlertConfig((prev) => ({
+              ...prev,
+              visible: false,
+            }))
+          }
+        />
+
       </ScrollView>
     </SafeAreaView>
   );
@@ -469,3 +517,4 @@ const styles = StyleSheet.create({
     marginTop: Spacing.xs,
   },
 });
+
