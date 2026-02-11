@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
-import { Colors, FontSize } from '../../constants/Colors';
+import { Colors, FontSize } from '../../../constants/Colors';
 
 export default function VendedorStandLayout() {
   return (

@@ -46,9 +46,10 @@ export default function RootLayout() {
 
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-          <Stack.Screen name="(vendedorinformal)" options={{ headerShown: false }} />
-          <Stack.Screen name="(vendedorstand)" options={{ headerShown: false }} />
+          <Stack.Screen name="(vendedorinformal)/(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="(vendedorstand)/(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="(admin)" options={{ headerShown: false }} />
+          
 
           <Stack.Screen name="perfil/meusdados" options={{ headerShown: false }} />
           <Stack.Screen name="perfil/testeagendados" options={{ headerShown: false }} />
