@@ -1,7 +1,21 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState } from 'react';
-import { Dimensions, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { BorderRadius, Colors, FontSize, FontWeight, Spacing } from '../constants/Colors';
+import React, { useMemo, useState } from 'react';
+import {
+  Dimensions,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import {
+  BorderRadius,
+  Colors,
+  FontSize,
+  FontWeight,
+  Spacing,
+} from '../constants/Colors';
 import { Car } from '../types';
 
 const { width } = Dimensions.get('window');
@@ -19,35 +33,56 @@ export default function CarDetails({
 }: CarDetailsProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
+  // 🔥 NORMALIZAÇÃO DEFINITIVA DAS IMAGENS
+  const images = useMemo(() => {
+    if (car.images && car.images.length > 0) {
+      return car.images;
+    }
+
+    if (car.imagemPrincipal) {
+      return [car.imagemPrincipal];
+    }
+
+    return [];
+  }, [car]);
+
   const formatPrice = (price: number) =>
     price.toLocaleString('pt-MZ', {
       style: 'currency',
       currency: 'MZN',
     });
 
-  const formatKm = (km: number) =>
-    `${(km / 1000).toFixed(0)} mil km`;
+  const formatKm = (km: number) => `${(km / 1000).toFixed(0)} mil km`;
 
   const handlePrevImage = () => {
-    setCurrentImageIndex((prev) => 
-      prev === 0 ? car.imagens.length - 1 : prev - 1
+    if (images.length === 0) return;
+    setCurrentImageIndex((prev) =>
+      prev === 0 ? images.length - 1 : prev - 1
     );
   };
 
   const handleNextImage = () => {
-    setCurrentImageIndex((prev) => 
-      prev === car.imagens.length - 1 ? 0 : prev + 1
+    if (images.length === 0) return;
+    setCurrentImageIndex((prev) =>
+      prev === images.length - 1 ? 0 : prev + 1
     );
   };
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      {/* Galeria de Imagens */}
+      {/* Galeria */}
       <View style={styles.imageContainer}>
-        <Image
-          source={{ uri: car.imagens[currentImageIndex] }}
-          style={styles.image}
-        />
+        {images.length > 0 ? (
+          <Image
+            source={{ uri: images[currentImageIndex] }}
+            style={styles.image}
+          />
+        ) : (
+          <View style={[styles.image, styles.noImage]}>
+            <Ionicons name="image-outline" size={60} color="#999" />
+            <Text style={{ color: '#999' }}>Sem imagem disponível</Text>
+          </View>
+        )}
 
         {car.destaque && (
           <View style={styles.badgeDestaque}>
@@ -69,8 +104,8 @@ export default function CarDetails({
           </TouchableOpacity>
         )}
 
-        {/* Navegação de Imagens */}
-        {car.imagens.length > 1 && (
+        {/* Navegação */}
+        {images.length > 1 && (
           <>
             <TouchableOpacity
               style={[styles.navButton, styles.navButtonLeft]}
@@ -88,7 +123,7 @@ export default function CarDetails({
 
             <View style={styles.imageCounter}>
               <Text style={styles.imageCounterText}>
-                {currentImageIndex + 1} / {car.imagens.length}
+                {currentImageIndex + 1} / {images.length}
               </Text>
             </View>
           </>
@@ -96,16 +131,17 @@ export default function CarDetails({
       </View>
 
       {/* Thumbnails */}
-      {car.imagens.length > 1 && (
+      {images.length > 1 && (
         <View style={styles.thumbnailContainer}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {car.imagens.map((img, index) => (
+            {images.map((img, index) => (
               <TouchableOpacity
                 key={index}
                 onPress={() => setCurrentImageIndex(index)}
                 style={[
                   styles.thumbnail,
-                  index === currentImageIndex && styles.thumbnailActive,
+                  index === currentImageIndex &&
+                  styles.thumbnailActive,
                 ]}
               >
                 <Image source={{ uri: img }} style={styles.thumbnailImage} />
@@ -114,7 +150,6 @@ export default function CarDetails({
           </ScrollView>
         </View>
       )}
-
       {/* Conteúdo */}
       <View style={styles.content}>
         {/* Cabeçalho com Categoria */}
@@ -140,25 +175,25 @@ export default function CarDetails({
 
         {/* Cards de Informações Principais */}
         <View style={styles.infoCardsContainer}>
-          <InfoCard 
-            icon="calendar-outline" 
-            label="Ano" 
-            value={String(car.ano)} 
+          <InfoCard
+            icon="calendar-outline"
+            label="Ano"
+            value={String(car.ano)}
           />
-          <InfoCard 
-            icon="speedometer-outline" 
-            label="Quilometragem" 
-            value={formatKm(car.quilometragem)} 
+          <InfoCard
+            icon="speedometer-outline"
+            label="Quilometragem"
+            value={formatKm(car.quilometragem)}
           />
-          <InfoCard 
-            icon="water-outline" 
-            label="Combustível" 
-            value={car.combustivel} 
+          <InfoCard
+            icon="water-outline"
+            label="Combustível"
+            value={car.combustivel}
           />
-          <InfoCard 
-            icon="color-palette-outline" 
-            label="Cor" 
-            value={car.cor} 
+          <InfoCard
+            icon="color-palette-outline"
+            label="Cor"
+            value={car.cor}
           />
         </View>
 
@@ -246,6 +281,11 @@ const styles = StyleSheet.create({
     height: 300,
     position: 'relative',
   },
+  noImage: {
+    width: '100%',
+    height: '100%',
+  },
+
   image: {
     width: '100%',
     height: '100%',

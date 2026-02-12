@@ -1,3 +1,4 @@
+import StatCard from '@/components/StatCard';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -13,16 +14,37 @@ export default function StandHomeScreen() {
       <ScrollView>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.greeting}>Olá, {user?.name}! 👋</Text>
-          <Text style={styles.subtitle}>Bem-vindo ao painel do stand</Text>
+          <Text style={styles.greeting}>Olá, {user?.name}</Text>
+          {/*           <Text style={styles.subtitle}>Bem-vindo ao painel do stand</Text> */}
         </View>
-
         {/* Stats */}
         <View style={styles.statsGrid}>
-          <StatCard icon="car-sport" value="12" label="Anúncios Ativos" color={Colors.primary} />
-          <StatCard icon="eye" value="340" label="Visualizações" color={Colors.info} />
-          <StatCard icon="chatbubbles" value="8" label="Mensagens" color={Colors.success} />
-          <StatCard icon="cash" value="5" label="Vendas (mês)" color={Colors.warning} />
+          <StatCard
+            icon="car-sport"
+            value={12}
+            label="Anúncios Ativos"
+            color={Colors.primary}
+          />
+          <StatCard
+            icon="eye"
+            value={340}
+            label="Visualizações"
+            color={Colors.info}
+            trend="+8%"
+          />
+          <StatCard
+            icon="chatbubbles"
+            value={8}
+            label="Mensagens"
+            color={Colors.success}
+          />
+          <StatCard
+            icon="cash"
+            value={5}
+            label="Vendas (mês)"
+            color={Colors.warning}
+            trend="+2"
+          />
         </View>
 
         {/* Quick Actions */}
@@ -34,16 +56,6 @@ export default function StandHomeScreen() {
         </View>
       </ScrollView>
     </SafeAreaView>
-  );
-}
-
-function StatCard({ icon, value, label, color }: any) {
-  return (
-    <View style={styles.statCard}>
-      <Ionicons name={icon} size={28} color={color} />
-      <Text style={styles.statValue}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
-    </View>
   );
 }
 
@@ -76,8 +88,9 @@ const styles = StyleSheet.create({
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    padding: Spacing.md,
-    gap: Spacing.sm,
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.md,
+    marginTop: Spacing.md,
   },
   statCard: {
     flex: 1,

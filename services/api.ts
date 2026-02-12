@@ -4,7 +4,7 @@ import { router } from 'expo-router';
 
 // Altere para o IP da sua máquina quando testar no dispositivo físico
 // Ex: 'http://192.168.1.100:3000'
-const BASE_URL = 'http://192.168.1.105:3000';
+const BASE_URL = 'http://10.1.2.113:3000';
 
 export const api = axios.create({
   baseURL: BASE_URL,

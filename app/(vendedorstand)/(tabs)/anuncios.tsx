@@ -165,7 +165,7 @@ export default function MeusAnunciosScreen() {
 
         <TouchableOpacity
           style={styles.addButton}
-          onPress={() => router.push('/(vendedorstand)/adicionar')}
+          onPress={() => router.push('/(vendedorstand)/(tabs)/adicionar')}
         >
           <Ionicons name="add" size={24} color={Colors.surface} />
         </TouchableOpacity>
@@ -193,7 +193,7 @@ export default function MeusAnunciosScreen() {
             </Text>
             <TouchableOpacity
               style={styles.emptyButton}
-              onPress={() => router.push('/(vendedorstand)/adicionar')}
+              onPress={() => router.push('/(vendedorstand)/(tabs)/adicionar')}
             >
               <Ionicons name="add-circle" size={20} color={Colors.surface} />
               <Text style={styles.emptyButtonText}>Adicionar Carro</Text>

@@ -14,7 +14,7 @@ export default function PendenteStandScreen() {
             ? Colors.gradientPrimary
             : ['#000000', '#FFFFFF']) as unknown as readonly [string, string, ...string[]]
         }
-        style={styles.header}
+        style={styles.gradient}
       >
         <View style={styles.content}>
           <View style={styles.iconContainer}>

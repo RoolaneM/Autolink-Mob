@@ -1,64 +1,70 @@
 import AlertCard from '@/components/AlertCard';
+import CarDetails from '@/components/CarDetails';
 import { Ionicons } from '@expo/vector-icons';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Linking, ScrollView, Share, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import CarDetails from '../../components/CarDetails';
 import { BorderRadius, Colors, FontSize, FontWeight, Spacing } from '../../constants/Colors';
-import { CARROS_MOCK } from '../../constants/data';
 import useCarStore from '../../store/useCarStore';
 import { Car } from '../../types';
 
 export default function DetalhesPage() {
     const { id } = useLocalSearchParams<{ id: string }>();
-    const { toggleFavorito, isFavorito } = useCarStore();
+    const { carros, toggleFavorito, isFavorito, loadCarros } = useCarStore();
+    const [car, setCar] = useState<Car | undefined>(undefined);
 
-    const car = CARROS_MOCK.find((item: Car) => item.id === id);
+    // Carrega carros se ainda não tiver
+    useEffect(() => {
+        console.log(JSON.stringify(carros, null, 2));
+        if (carros.length === 0) {
+            loadCarros();
+        }
+    }, [carros, loadCarros]);
 
-    if (!car) {
-        return (
-            <View style={styles.notFound}>
-                <Ionicons name="alert-circle-outline" size={64} color={Colors.error} />
-                <Text style={styles.notFoundText}>Carro não encontrado</Text>
-                <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-                    <Text style={styles.backButtonText}>Voltar</Text>
-                </TouchableOpacity>
-            </View>
-        );
-    }
+    // Atualiza carro quando carros da store mudarem
+    useEffect(() => {
+        const foundCar = carros.find((item) => item.id === id);
+        setCar(foundCar);
+    }, [carros, id]);
 
+    // Configuração do alert
+    const [alertConfig, setAlertConfig] = useState({
+        visible: false,
+        title: '',
+        message: '',
+        actions: [] as any[],
+    });
+
+    // Handlers
     const handleChat = () => {
-        router.push({
-            pathname: '/mensagem/chatvendedor',
-            params: { id: car.id },
-        });
+        if (!car) return;
+        router.push({ pathname: '/mensagem/chatvendedor', params: { id: car.id } });
     };
 
-    const handleWhatsApp = () => {
-        const message = `Olá! Tenho interesse no ${car.marca} ${car.modelo} ${car.ano}. Poderia me dar mais informações?`;
-        const url = `https://wa.me/${car.vendedor.whatsapp}?text=${encodeURIComponent(message)}`;
-        Linking.openURL(url);
-    };
+    /*   const handleWhatsApp = () => {
+          if (!car) return;
+          const message = `Olá! Tenho interesse no ${car.marca} ${car.modelo} ${car.ano}. Poderia me dar mais informações?`;
+          const url = `https://wa.me/${car.vendedor.whatsapp}?text=${encodeURIComponent(message)}`;
+          Linking.openURL(url);
+      }; */
 
     const handleCall = () => {
+        if (!car) return;
         Linking.openURL(`tel:${car.vendedor.telefone}`);
     };
 
     const handleTestDrive = () => {
-        router.push({
-            pathname: '/agendamento',
-            params: { carId: car.id },
-        });
+        if (!car) return;
+        router.push({ pathname: '/agendamento', params: { carId: car.id } });
     };
 
     const handleFinanciamento = () => {
-        router.push({
-            pathname: '/financiamento',
-            params: { carId: car.id },
-        });
+        if (!car) return;
+        router.push({ pathname: '/financiamento', params: { carId: car.id } });
     };
 
     const handleShare = async () => {
+        if (!car) return;
         try {
             await Share.share({
                 message: `Confira este ${car.marca} ${car.modelo} ${car.ano} por ${car.preco.toLocaleString('pt-MZ', { style: 'currency', currency: 'MZN' })}`,
@@ -69,28 +75,16 @@ export default function DetalhesPage() {
         }
     };
 
-    const [alertConfig, setAlertConfig] = useState({
-        visible: false,
-        title: '',
-        message: '',
-        actions: [] as any[],
-    });
-
-
     const handlePedido = () => {
+        if (!car) return;
         setAlertConfig({
             visible: true,
             title: 'Fazer Pedido',
             message: `Deseja fazer um pedido para o ${car.marca} ${car.modelo}?`,
             actions: [
                 { text: 'Cancelar', style: 'cancel' },
-                {
-                    text: 'Confirmar',
-                    /*     onPress: () => {
-                            router.push(`/historico/${car.id}`);
-                        }, */
-                },
-            ]
+                { text: 'Confirmar' },
+            ],
         });
     };
 
@@ -106,76 +100,87 @@ export default function DetalhesPage() {
                             <TouchableOpacity style={styles.headerButton} onPress={handleShare}>
                                 <Ionicons name="share-outline" size={24} color={Colors.surface} />
                             </TouchableOpacity>
-                            <TouchableOpacity
-                                style={styles.headerButton}
-                                onPress={() => toggleFavorito(car.id)}
-                            >
-                                <Ionicons
-                                    name={isFavorito(car.id) ? 'heart' : 'heart-outline'}
-                                    size={24}
-                                    color={isFavorito(car.id) ? Colors.favorite : Colors.surface}
-                                />
-                            </TouchableOpacity>
+                            {car && (
+                                <TouchableOpacity style={styles.headerButton} onPress={() => toggleFavorito(car.id)}>
+                                    <Ionicons
+                                        name={isFavorito(car.id) ? 'heart' : 'heart-outline'}
+                                        size={24}
+                                        color={isFavorito(car.id) ? Colors.favorite : Colors.surface}
+                                    />
+                                </TouchableOpacity>
+                            )}
                         </View>
                     ),
                 }}
             />
 
             <View style={styles.container}>
-                <ScrollView showsVerticalScrollIndicator={false}>
-                    <CarDetails car={car} />
-
-                    {/* Ações Rápidas */}
-                    <View style={styles.quickActions}>
-                        <TouchableOpacity style={styles.quickActionButton} onPress={handleTestDrive}>
-                            <View style={styles.quickActionIcon}>
-                                <Ionicons name="calendar-outline" size={24} color={Colors.primary} />
-                            </View>
-                            <Text style={styles.quickActionText}>Test Drive</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity style={styles.quickActionButton} onPress={handleFinanciamento}>
-                            <View style={styles.quickActionIcon}>
-                                <Ionicons name="calculator-outline" size={24} color={Colors.primary} />
-                            </View>
-                            <Text style={styles.quickActionText}>Financiar</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity style={styles.quickActionButton} onPress={handleCall}>
-                            <View style={styles.quickActionIcon}>
-                                <Ionicons name="call-outline" size={24} color={Colors.primary} />
-                            </View>
-                            <Text style={styles.quickActionText}>Ligar</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity style={styles.quickActionButton} onPress={handleShare}>
-                            <View style={styles.quickActionIcon}>
-                                <Ionicons name="share-social-outline" size={24} color={Colors.primary} />
-                            </View>
-                            <Text style={styles.quickActionText}>Compartilhar</Text>
+                {!car ? (
+                    <View style={styles.notFound}>
+                        <Ionicons name="alert-circle-outline" size={64} color={Colors.error} />
+                        <Text style={styles.notFoundText}>Carro não encontrado</Text>
+                        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+                            <Text style={styles.backButtonText}>Voltar</Text>
                         </TouchableOpacity>
                     </View>
+                ) : (
+                    <ScrollView showsVerticalScrollIndicator={false}>
+                        <CarDetails car={car} />
 
-                    <View style={{ height: 120 }} />
-                </ScrollView>
+                        {/* Ações Rápidas */}
+                        {/* <View style={styles.quickActions}>
+                            <TouchableOpacity style={styles.quickActionButton} onPress={handleTestDrive}>
+                                <View style={styles.quickActionIcon}>
+                                    <Ionicons name="calendar-outline" size={24} color={Colors.primary} />
+                                </View>
+                                <Text style={styles.quickActionText}>Test Drive</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity style={styles.quickActionButton} onPress={handleFinanciamento}>
+                                <View style={styles.quickActionIcon}>
+                                    <Ionicons name="calculator-outline" size={24} color={Colors.primary} />
+                                </View>
+                                <Text style={styles.quickActionText}>Financiar</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity style={styles.quickActionButton} onPress={handleCall}>
+                                <View style={styles.quickActionIcon}>
+                                    <Ionicons name="call-outline" size={24} color={Colors.primary} />
+                                </View>
+                                <Text style={styles.quickActionText}>Ligar</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity style={styles.quickActionButton} onPress={handleShare}>
+                                <View style={styles.quickActionIcon}>
+                                    <Ionicons name="share-social-outline" size={24} color={Colors.primary} />
+                                </View>
+                                <Text style={styles.quickActionText}>Compartilhar</Text>
+                            </TouchableOpacity>
+                        </View> */}
+
+                        <View style={{ height: 120 }} />
+                    </ScrollView>
+                )}
 
                 {/* Bottom Buttons */}
-                <View style={styles.bottomBar}>
-                    <TouchableOpacity style={styles.chatButton} onPress={handleChat} activeOpacity={0.8}>
-                        <Ionicons name="chatbubbles" size={20} color={Colors.surface} />
-                        <Text style={styles.buttonText}>Chat</Text>
-                    </TouchableOpacity>
+                {car && (
+                    <View style={styles.bottomBar}>
+                        <TouchableOpacity style={styles.chatButton} onPress={handleChat} activeOpacity={0.8}>
+                            <Ionicons name="chatbubbles" size={20} color={Colors.surface} />
+                            <Text style={styles.buttonText}>Chat</Text>
+                        </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.whatsappButton} onPress={handleWhatsApp} activeOpacity={0.8}>
-                        <Ionicons name="logo-whatsapp" size={20} color={Colors.surface} />
-                        <Text style={styles.buttonText}>WhatsApp</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity style={styles.orderButton} onPress={handlePedido} activeOpacity={0.8}>
-                        <Ionicons name="cart" size={20} color={Colors.surface} />
-                        <Text style={styles.buttonText}>Pedido</Text>
-                    </TouchableOpacity>
-                </View>
+                        {/*      <TouchableOpacity style={styles.whatsappButton} onPress={handleWhatsApp} activeOpacity={0.8}>
+                            <Ionicons name="logo-whatsapp" size={20} color={Colors.surface} />
+                            <Text style={styles.buttonText}>WhatsApp</Text>
+                        </TouchableOpacity>
+                                */}
+                        <TouchableOpacity style={styles.orderButton} onPress={handlePedido} activeOpacity={0.8}>
+                            <Ionicons name="cart" size={20} color={Colors.surface} />
+                            <Text style={styles.buttonText}>Pedido</Text>
+                        </TouchableOpacity>
+                    </View>
+                )}
             </View>
 
             <AlertCard
@@ -183,14 +188,8 @@ export default function DetalhesPage() {
                 title={alertConfig.title}
                 message={alertConfig.message}
                 actions={alertConfig.actions}
-                onClose={() =>
-                    setAlertConfig((prev) => ({
-                        ...prev,
-                        visible: false,
-                    }))
-                }
+                onClose={() => setAlertConfig((prev) => ({ ...prev, visible: false }))}
             />
-
         </>
     );
 }
@@ -289,16 +288,16 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         gap: Spacing.xs,
     },
-    whatsappButton: {
-        flex: 1,
-        flexDirection: 'row',
-        backgroundColor: '#25D366',
-        paddingVertical: Spacing.md,
-        borderRadius: BorderRadius.lg,
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: Spacing.xs,
-    },
+    /*     whatsappButton: {
+            flex: 1,
+            flexDirection: 'row',
+            backgroundColor: '#25D366',
+            paddingVertical: Spacing.md,
+            borderRadius: BorderRadius.lg,
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: Spacing.xs,
+        }, */
     orderButton: {
         flex: 1,
         flexDirection: 'row',

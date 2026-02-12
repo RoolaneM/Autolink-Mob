@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { router } from 'expo-router';
 import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
+import { InteractionManager } from 'react-native';
 import { api } from '../services/api';
 
 
@@ -22,8 +23,9 @@ interface AuthContextData {
   isLoading: boolean;
   login: (email: string, password: string) => Promise<AuthUser>;
   logout: () => Promise<void>;
-  authenticateWithBiometrics?: () => Promise<boolean>; // ⚡ Adicione aqui
+  authenticateWithBiometrics: () => Promise<boolean>; // ⚡ agora obrigatório
 }
+
 
 /* ================== CONTEXT ================== */
 const AuthContext = createContext<AuthContextData>({} as AuthContextData);
@@ -47,15 +49,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const storedUser = await AsyncStorage.getItem('@autolink:user');
 
       if (storedToken && storedUser) {
-        const biometricOk = await authenticateWithBiometrics();
+        /*       const biometricOk = await authenticateWithBiometrics();
+      
+              if (!biometricOk) {
+                await logout();
+                return;
+              }
+       */
 
-        if (!biometricOk) {
-          await logout();
-          return;
+        if (storedToken && storedUser) {
+          setToken(storedToken);
+          setUser(JSON.parse(storedUser));
         }
 
+        const parsedUser: AuthUser = JSON.parse(storedUser);
+
         setToken(storedToken);
-        setUser(JSON.parse(storedUser));
+        setUser(parsedUser);
+
+        // 🔥 ADICIONE ISSO AQUI
+        InteractionManager.runAfterInteractions(() => {
+          redirectByRole(parsedUser.role);
+        });
+
       }
     } catch (error) {
       console.error('Erro ao carregar dados do storage:', error);
@@ -63,6 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(false);
     }
   }
+
 
 
   /* ====== LOGIN ====== */
@@ -130,7 +147,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         router.replace('/(admin)');
         break;
       case 'STAND':
-        router.replace('/(vendedorstand)');
+        router.replace('/(vendedorstand)/(tabs)');
         break;
       case 'VENDEDOR':
         router.replace('/(vendedorinformal)');
@@ -158,9 +175,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     </AuthContext.Provider>
   );
 }
-
-
-
 
 /* ================== HOOK ================== */
 export function useAuth() {

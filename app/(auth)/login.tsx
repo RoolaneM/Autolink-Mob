@@ -80,9 +80,9 @@ export default function LoginScreen() {
 
 
             // Se houver falha, tentar biometria
-            if (authenticateWithBiometrics) {
-                handleBiometricLogin();
-            }
+            /*  if (authenticateWithBiometrics) {
+                 handleBiometricLogin();
+             } */
             const status = error.response?.status;
             const message = error.response?.data?.message;
 
@@ -159,7 +159,7 @@ export default function LoginScreen() {
 
                     <TouchableOpacity
                         style={styles.forgotPassword}
-                    /*     onPress={() => router.push('/recuperar-senha')} */
+                        onPress={() => router.push('/recuperar-senha')}
                     >
                         <Text style={styles.forgotPasswordText}>Esqueceu a senha?</Text>
                     </TouchableOpacity>
@@ -180,14 +180,14 @@ export default function LoginScreen() {
                         )}
                     </TouchableOpacity>
 
-                    <TouchableOpacity
+                {/*     <TouchableOpacity
                         style={styles.biometricButton}
                         onPress={handleBiometricLogin}
                         activeOpacity={0.8}
                     >
                         <Ionicons name="finger-print-outline" size={20} color={Colors.surface} />
                         <Text style={styles.biometricButtonText}>Entrar com Biometria</Text>
-                    </TouchableOpacity>
+                    </TouchableOpacity> */}
 
 
                     {/* Divider */}

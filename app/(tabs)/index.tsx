@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -13,8 +13,13 @@ import useCarStore from '../../store/useCarStore';
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { carros, toggleFavorito, isFavorito } = useCarStore();
+  const { carros, loadCarros, toggleFavorito, isFavorito } = useCarStore();
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+
+  // Carrega carros da API ao montar
+  useEffect(() => {
+    loadCarros();
+  }, []);
 
   const categoryFilters = CATEGORIAS.map(cat => ({
     id: cat,
@@ -42,6 +47,7 @@ export default function HomeScreen() {
     );
   };
 
+  // Aplica filtro por categoria usando o estado local
   const carrosFiltrados = selectedCategories.length > 0
     ? carros.filter(car => selectedCategories.includes(car.categoria))
     : carros;
@@ -62,14 +68,8 @@ export default function HomeScreen() {
       >
         <View style={styles.header}>
           <View style={styles.headerContent}>
-            {/* <Image
-              source={require('../../assets/images/iconbranco.png')}
-              style={styles.logo}
-              resizeMode="contain"
-            /> */}
             <View>
               <Text style={styles.headerTitle}>AutoLink MZ</Text>
-              {/*               <Text style={styles.headerSubtitle}>Encontre o carro dos seus sonhos</Text> */}
             </View>
 
             <TouchableOpacity
@@ -80,7 +80,6 @@ export default function HomeScreen() {
             </TouchableOpacity>
           </View>
         </View>
-
       </LinearGradient>
 
       {/* Filtros de Categoria */}
@@ -132,55 +131,24 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
-  /*   header: {
-      paddingHorizontal: 16,
-      paddingVertical: 10,
-      flexDirection: 'row',
-      alignItems: 'center',
-    }, */
-
   header: {
     paddingVertical: 8,
   },
-
   headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    width: '100%', // 👈 garante ocupação total da largura
+    width: '100%',
   },
-
-  logo: {
-    width: 120,
-    height: 40,
-  },
-
   messageButton: {
     padding: 8,
     marginLeft: 12,
   },
-
-
   headerTitle: {
-    fontSize: 25, // ajuste aqui
+    fontSize: 25,
     fontWeight: FontWeight.bold,
     color: Colors.surface,
-  },
-
-  headerSubtitle: {
-    fontSize: FontSize.md,
-    color: Colors.surface,
-    opacity: 0.9,
-    marginTop: 4,
-  },
-  notificationButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   listContent: {
     paddingTop: Spacing.md,
@@ -211,9 +179,4 @@ const styles = StyleSheet.create({
     color: Colors.textLight,
     marginTop: Spacing.xs,
   },
-
-  logoContainer: {
-    justifyContent: 'center',
-  },
-
 });

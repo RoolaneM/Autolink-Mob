@@ -1,31 +1,38 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import React, { useState } from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View, } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AuthInput from '../../../components/AuthInput';
+import CustomPicker from '../../../components/CustomPicker';
 import ImageUpload from '../../../components/ImageUpload';
 import { BorderRadius, Colors, FontSize, FontWeight, Spacing } from '../../../constants/Colors';
 import { api } from '../../../services/api';
+import CatalogoService, { Cambio, Combustivel, Marca, Modelo } from '../../../services/catalogoService';
 
 export default function AdicionarCarroScreen() {
   const [loading, setLoading] = useState(false);
+  const [loadingCatalogo, setLoadingCatalogo] = useState(true);
+
+  // Catálogo
+  const [marcas, setMarcas] = useState<Marca[]>([]);
+  const [modelos, setModelos] = useState<Modelo[]>([]);
+  const [modelosFiltrados, setModelosFiltrados] = useState<Modelo[]>([]);
+  const [combustiveis, setCombustiveis] = useState<Combustivel[]>([]);
+  const [cambios, setCambios] = useState<Cambio[]>([]);
+
   const [form, setForm] = useState({
-    marca: '',
-    modelo: '',
+    marcaId: 0,
+    marcaNome: '',
+    modeloId: 0,
+    modeloNome: '',
     ano: '',
     preco: '',
     quilometragem: '',
-    combustivel: 'Gasolina',
-    transmissao: 'Manual',
+    combustivelId: 0,
+    combustivelNome: '',
+    transmissaoId: 0,
+    transmissaoNome: '',
     cor: '',
     portas: '4',
     descricao: '',
@@ -37,14 +44,53 @@ export default function AdicionarCarroScreen() {
   const [images, setImages] = useState<string[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  useEffect(() => {
+    loadCatalogo();
+  }, []);
+
+  // Quando marca muda, filtra os modelos
+  useEffect(() => {
+    if (form.marcaId > 0) {
+      const filtered = modelos.filter((m) => m.marca.id === form.marcaId);
+      setModelosFiltrados(filtered);
+      // Limpa modelo selecionado se não pertencer à marca
+      if (form.modeloId > 0) {
+        const modeloBelongs = filtered.find((m) => m.id === form.modeloId);
+        if (!modeloBelongs) {
+          setForm({ ...form, modeloId: 0, modeloNome: '' });
+        }
+      }
+    } else {
+      setModelosFiltrados([]);
+    }
+  }, [form.marcaId, modelos]);
+
+  const loadCatalogo = async () => {
+    try {
+      setLoadingCatalogo(true);
+      const catalogo = await CatalogoService.getAllCatalogo();
+      setMarcas(catalogo.marcas);
+      setModelos(catalogo.modelos);
+      setCombustiveis(catalogo.combustiveis);
+      setCambios(catalogo.cambios);
+    } catch (error) {
+      console.error('Erro ao carregar catálogo:', error);
+      Alert.alert('Erro', 'Não foi possível carregar o catálogo. Tente novamente.');
+    } finally {
+      setLoadingCatalogo(false);
+    }
+  };
+
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!form.marca.trim()) newErrors.marca = 'Marca é obrigatória';
-    if (!form.modelo.trim()) newErrors.modelo = 'Modelo é obrigatório';
+    if (form.marcaId === 0) newErrors.marca = 'Marca é obrigatória';
+    if (form.modeloId === 0) newErrors.modelo = 'Modelo é obrigatório';
     if (!form.ano.trim()) newErrors.ano = 'Ano é obrigatório';
     if (!form.preco.trim()) newErrors.preco = 'Preço é obrigatório';
     if (!form.quilometragem.trim()) newErrors.quilometragem = 'Quilometragem é obrigatória';
+    if (form.combustivelId === 0) newErrors.combustivel = 'Combustível é obrigatório';
+    if (form.transmissaoId === 0) newErrors.transmissao = 'Transmissão é obrigatória';
     if (!form.cidade.trim()) newErrors.cidade = 'Cidade é obrigatória';
     if (!form.estado.trim()) newErrors.estado = 'Estado é obrigatório';
 
@@ -67,12 +113,22 @@ export default function AdicionarCarroScreen() {
     try {
       const formData = new FormData();
 
-      // Adicionar campos do formulário
-      Object.entries(form).forEach(([key, value]) => {
-        formData.append(key, value);
-      });
+      // Dados básicos
+      formData.append('marca', form.marcaNome);
+      formData.append('modelo', form.modeloNome);
+      formData.append('ano', form.ano);
+      formData.append('preco', form.preco);
+      formData.append('quilometragem', form.quilometragem);
+      formData.append('combustivel', form.combustivelNome);
+      formData.append('transmissao', form.transmissaoNome);
+      formData.append('cor', form.cor);
+      formData.append('portas', form.portas);
+      formData.append('descricao', form.descricao);
+      formData.append('categoria', form.categoria);
+      formData.append('cidade', form.cidade);
+      formData.append('estado', form.estado);
 
-      // Adicionar imagens
+      // Imagens
       images.forEach((uri, index) => {
         const filename = uri.split('/').pop();
         const match = /\.(\w+)$/.exec(filename || '');
@@ -115,6 +171,15 @@ export default function AdicionarCarroScreen() {
     }
   };
 
+  if (loadingCatalogo) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+        <Text style={styles.loadingText}>Carregando catálogo...</Text>
+      </View>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -126,21 +191,31 @@ export default function AdicionarCarroScreen() {
         <View style={styles.form}>
           <Text style={styles.sectionTitle}>Informações Básicas</Text>
 
-          <AuthInput
+          <CustomPicker
             label="Marca"
-            value={form.marca}
-            onChangeText={(text) => setForm({ ...form, marca: text })}
-            placeholder="Ex: Toyota"
+            value={form.marcaNome}
+            options={marcas}
+            onSelect={(marca) =>
+              setForm({ ...form, marcaId: Number(marca.id), marcaNome: marca.nome })
+            }
+            placeholder="Selecione a marca"
             icon="car-outline"
+            searchable
             error={errors.marca}
           />
 
-          <AuthInput
+          <CustomPicker
             label="Modelo"
-            value={form.modelo}
-            onChangeText={(text) => setForm({ ...form, modelo: text })}
-            placeholder="Ex: Corolla"
+            value={form.modeloNome}
+            options={modelosFiltrados}
+            onSelect={(modelo) =>
+              setForm({ ...form, modeloId: Number(modelo.id), modeloNome: modelo.nome })
+            }
+            placeholder={
+              form.marcaId === 0 ? 'Selecione a marca primeiro' : 'Selecione o modelo'
+            }
             icon="car-sport-outline"
+            searchable
             error={errors.modelo}
           />
 
@@ -184,6 +259,38 @@ export default function AdicionarCarroScreen() {
             keyboardType="number-pad"
             icon="speedometer-outline"
             error={errors.quilometragem}
+          />
+
+          <CustomPicker
+            label="Combustível"
+            value={form.combustivelNome}
+            options={combustiveis}
+            onSelect={(combustivel) =>
+              setForm({
+                ...form,
+                combustivelId: Number(combustivel.id),
+                combustivelNome: combustivel.nome,
+              })
+            }
+            placeholder="Selecione o combustível"
+            icon="flash-outline"
+            error={errors.combustivel}
+          />
+
+          <CustomPicker
+            label="Transmissão"
+            value={form.transmissaoNome}
+            options={cambios}
+            onSelect={(cambio) =>
+              setForm({
+                ...form,
+                transmissaoId: Number(cambio.id),
+                transmissaoNome: cambio.nome,
+              })
+            }
+            placeholder="Selecione a transmissão"
+            icon="settings-outline"
+            error={errors.transmissao}
           />
 
           <AuthInput
@@ -271,6 +378,17 @@ export default function AdicionarCarroScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: Colors.background,
+  },
+  loadingText: {
+    marginTop: Spacing.md,
+    fontSize: FontSize.md,
+    color: Colors.textSecondary,
+  },
   header: {
     backgroundColor: Colors.surface,
     padding: Spacing.lg,

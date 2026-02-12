@@ -33,7 +33,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AuthProvider } from '../context/AuthContext';
 
 export const unstable_settings = {
-  anchor: '(tabs)',
+/*   anchor: '(tabs)', */
 };
 
 export default function RootLayout() {
@@ -43,13 +43,12 @@ export default function RootLayout() {
     <AuthProvider>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <Stack>
-
+          <Stack.Screen name="loading" options={{ headerShown: false }} />
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="(auth)" options={{ headerShown: false }} />
           <Stack.Screen name="(vendedorinformal)/(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="(vendedorstand)/(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="(admin)" options={{ headerShown: false }} />
-          
 
           <Stack.Screen name="perfil/meusdados" options={{ headerShown: false }} />
           <Stack.Screen name="perfil/testeagendados" options={{ headerShown: false }} />

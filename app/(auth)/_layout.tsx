@@ -26,6 +26,11 @@ export default function AuthLayout() {
         name="registro-vendedor"
         options={{ headerShown: false }}
       />
+
+      <Stack.Screen
+        name="auth-lock"
+        options={{ headerShown: false }}
+      />
       <Stack.Screen
         name="recuperar-senha"
         options={{

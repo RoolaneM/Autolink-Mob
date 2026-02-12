@@ -1,8 +1,9 @@
 import { api, uploadApi } from './api';
 
-const BASE_URL = 'http://192.168.1.105:3000'; // IP do backend
+const BASE_URL = 'http://10.1.2.113:3000'; // IP do backend
 
 export interface Car {
+  categoria(categoria: any): unknown;
   id: string;
   marca: string;
   modelo: string;
@@ -15,6 +16,11 @@ export interface Car {
   messages?: number;
   // Caso queira, pode incluir todas as imagens:
   images?: string[];
+  imagens?: string[];
+
+  // NOVOS CAMPOS
+  /*   categoria: string;  */     // Sedan, SUV, etc
+  destaque?: boolean;     // true se estiver em destaque
 }
 
 export class CarService {
@@ -74,6 +80,29 @@ export class CarService {
       return data;
     } catch (error) {
       console.error('Erro ao criar carro:', error);
+      throw error;
+    }
+  }
+
+  // Busca todos os carros disponíveis (para compradores)
+  static async getAllCars(): Promise<Car[]> {
+    try {
+      const { data } = await api.get('/cars');
+
+      const cars: Car[] = data.map((car: any) => ({
+        ...car,
+        imagemPrincipal: car.imagemPrincipal
+          ? `${BASE_URL}${car.imagemPrincipal.replace(BASE_URL, '')}`
+          : null,
+
+        images: car.imagens
+          ? car.imagens.map((img: string) => `${BASE_URL}${img}`)
+          : [],
+      }));
+
+      return cars;
+    } catch (error) {
+      console.error('Erro ao carregar todos os carros:', error);
       throw error;
     }
   }
