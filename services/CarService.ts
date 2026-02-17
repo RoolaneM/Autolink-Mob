@@ -1,6 +1,6 @@
 import { api, uploadApi } from './api';
 
-const BASE_URL = 'http://10.1.2.113:3000'; // IP do backend
+const BASE_URL = 'http://192.168.1.105:3000'; // IP do backend
 
 export interface Car {
   categoria(categoria: any): unknown;

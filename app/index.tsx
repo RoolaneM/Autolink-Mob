@@ -7,7 +7,7 @@ import { Colors, FontSize, FontWeight, Spacing } from '../constants/Colors';
 import { useAuth } from '../context/AuthContext';
 
 export default function LoadingScreen() {
-    const { isLoading, isAuthenticated } = useAuth();
+    const { isLoading, isAuthenticated, user } = useAuth();
 
     // Animações
     const scaleAnim = useRef(new Animated.Value(0)).current;
@@ -15,7 +15,6 @@ export default function LoadingScreen() {
     const fadeAnim = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
-        // Inicia animações
         Animated.parallel([
             Animated.spring(scaleAnim, {
                 toValue: 1,
@@ -25,16 +24,15 @@ export default function LoadingScreen() {
             }),
             Animated.timing(fadeAnim, {
                 toValue: 1,
-                duration: 5000,
+                duration: 1500,
                 useNativeDriver: true,
             }),
         ]).start();
 
-        // Animação de rotação contínua
         Animated.loop(
             Animated.timing(rotateAnim, {
                 toValue: 1,
-                duration: 5000,
+                duration: 4000,
                 useNativeDriver: true,
             })
         ).start();
@@ -42,34 +40,59 @@ export default function LoadingScreen() {
 
     useEffect(() => {
         if (!isLoading) {
-            console.log('isLoading:', isLoading);
-            console.log('isAuthenticated:', isAuthenticated);
-            // Pequeno delay para garantir que o estado está estável
             const timer = setTimeout(() => {
-                // Animação de saída
                 Animated.parallel([
                     Animated.timing(scaleAnim, {
                         toValue: 0,
-                        duration: 5000,
+                        duration: 600,
                         useNativeDriver: true,
                     }),
                     Animated.timing(fadeAnim, {
                         toValue: 0,
-                        duration: 5000,
+                        duration: 600,
                         useNativeDriver: true,
                     }),
                 ]).start(() => {
-                    if (isAuthenticated) {
-                        router.replace('/(tabs)');
-                    } else {
-                        router.replace('/(auth)/auth-lock');
+
+                    // 🔵 PRIMEIRA VEZ
+                    if (!user) {
+                        router.replace('/(tabs)/welcome');
+                        return;
                     }
+
+                    // 🟡 Precisa biometria
+                    if (!isAuthenticated) {
+                        router.replace('/(auth)/auth-lock');
+                        return;
+                    }
+
+                    // 🟢 AUTENTICADO → REDIRECIONAR POR ROLE
+                    switch (user.role) {
+                        case 'ADMIN':
+                            router.replace('/(admin)/(tabs)');
+                            break;
+
+                        case 'STAND':
+                            router.replace('/(vendedorstand)/(tabs)');
+                            break;
+
+                        case 'VENDEDOR':
+                            router.replace('/(vendedorinformal)/(tabs)');
+                            break;
+
+                        case 'USER':
+                        default:
+                            router.replace('/(tabs)/welcome');
+                            break;
+                    }
+
                 });
-            }, 5000);
+            }, 1200);
 
             return () => clearTimeout(timer);
         }
-    }, [isLoading, isAuthenticated]);
+    }, [isLoading, isAuthenticated, user]);
+
 
     const spin = rotateAnim.interpolate({
         inputRange: [0, 1],
@@ -77,11 +100,18 @@ export default function LoadingScreen() {
     });
 
     return (
-        <LinearGradient colors={
-            (Colors.gradientPrimary.length >= 2
-                ? Colors.gradientPrimary
-                : ['#000000', '#FFFFFF']) as unknown as readonly [string, string, ...string[]]
-        } style={styles.container}>
+        <LinearGradient
+            colors={
+                (Colors.gradientPrimary.length >= 2
+                    ? Colors.gradientPrimary
+                    : ['#000000', '#FFFFFF']) as unknown as readonly [
+                        string,
+                        string,
+                        ...string[]
+                    ]
+            }
+            style={styles.container}
+        >
             <Animated.View
                 style={[
                     styles.content,
@@ -91,7 +121,6 @@ export default function LoadingScreen() {
                     },
                 ]}
             >
-                {/* Logo Animado */}
                 <Animated.View
                     style={[
                         styles.logoContainer,
@@ -105,18 +134,17 @@ export default function LoadingScreen() {
                     </View>
                 </Animated.View>
 
-                {/* Nome do App */}
                 <Text style={styles.appName}>AutoLinkMZ</Text>
-                <Text style={styles.tagline}>Conectando você ao carro dos seus sonhos</Text>
+                <Text style={styles.tagline}>
+                    Conectando você ao carro dos seus sonhos
+                </Text>
 
-                {/* Loading Indicator */}
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color={Colors.surface} />
                     <Text style={styles.loadingText}>Carregando...</Text>
                 </View>
             </Animated.View>
 
-            {/* Footer */}
             <Animated.View style={[styles.footer, { opacity: fadeAnim }]}>
                 <Text style={styles.footerText}>Versão 1.0.0</Text>
                 <Text style={styles.footerCopyright}>© 2026 AutoLinkMZ</Text>
@@ -146,10 +174,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         borderWidth: 4,
         borderColor: 'rgba(255,255,255,0.3)',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.3,
-        shadowRadius: 16,
         elevation: 8,
     },
     appName: {

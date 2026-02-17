@@ -1,8 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as LocalAuthentication from 'expo-local-authentication';
-import { router } from 'expo-router';
 import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
-import { InteractionManager } from 'react-native';
 import { api } from '../services/api';
 
 
@@ -23,7 +21,10 @@ interface AuthContextData {
   isLoading: boolean;
   login: (email: string, password: string) => Promise<AuthUser>;
   logout: () => Promise<void>;
-  authenticateWithBiometrics: () => Promise<boolean>; // ⚡ agora obrigatório
+  authenticateWithBiometrics: () => Promise<boolean>;
+  unlock: () => void;
+  isLocked: boolean;
+  // ⚡ agora obrigatório
 }
 
 
@@ -36,7 +37,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const isAuthenticated = !!user && !!token;
+  /*   const isAuthenticated = !!user && !!token; */
+
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  const [isLocked, setIsLocked] = useState(true); // bloqueado até biometria
+
+
 
   /* ====== CARREGAR SESSÃO AO INICIAR ====== */
   useEffect(() => {
@@ -60,6 +67,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (storedToken && storedUser) {
           setToken(storedToken);
           setUser(JSON.parse(storedUser));
+          setIsAuthenticated(true);
+          setIsLocked(true); // 🔒 bloqueia até biometria
         }
 
         const parsedUser: AuthUser = JSON.parse(storedUser);
@@ -67,10 +76,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setToken(storedToken);
         setUser(parsedUser);
 
-        // 🔥 ADICIONE ISSO AQUI
-        InteractionManager.runAfterInteractions(() => {
-          redirectByRole(parsedUser.role);
-        });
+        /*         // 🔥 ADICIONE ISSO AQUI
+                InteractionManager.runAfterInteractions(() => {
+                  redirectByRole(parsedUser.role);
+                }); */
+        setIsAuthenticated(false); // precisa desbloquear
+
+
 
       }
     } catch (error) {
@@ -97,8 +109,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setToken(data.accessToken);
       setUser(data.user);
 
-      // Redirecionar baseado no role
-      redirectByRole(data.user.role);
+      /*       // Redirecionar baseado no role
+            redirectByRole(data.user.role);
+       */
+
+      setIsAuthenticated(true);
 
       return data.user;
     } catch (error: any) {
@@ -134,30 +149,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setToken(null);
 
       // Redirecionar para login
-      router.replace('/login');
+      /*       router.replace('/login'); */
+
+      setIsAuthenticated(false);
+
     } catch (error) {
       console.error('Erro ao fazer logout:', error);
     }
   }
 
-  /* ====== REDIRECIONAR POR ROLE ====== */
-  function redirectByRole(role: string) {
-    switch (role) {
-      case 'ADMIN':
-        router.replace('/(admin)');
-        break;
-      case 'STAND':
-        router.replace('/(vendedorstand)/(tabs)');
-        break;
-      case 'VENDEDOR':
-        router.replace('/(vendedorinformal)');
-        break;
-      case 'USER':
-      default:
-        router.replace('/(tabs)');
-        break;
-    }
+  function unlock() {
+    setIsLocked(false); // desbloqueia para redirecionamento
   }
+
+
+
+  /* ====== REDIRECIONAR POR ROLE ====== */
+  /*   function redirectByRole(role: string) {
+      switch (role) {
+        case 'ADMIN':
+          router.replace('/(admin)/(tabs)');
+          break;
+        case 'STAND':
+          router.replace('/(vendedorstand)/(tabs)');
+          break;
+        case 'VENDEDOR':
+          router.replace('/(vendedorinformal)/(tabs)');
+          break;
+        case 'USER':
+        default:
+          router.replace('/(tabs)');
+          break;
+      }
+    } */
 
   return (
     <AuthContext.Provider
@@ -166,9 +190,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         token,
         isAuthenticated,
         isLoading,
+        isLocked,
         login,
         logout,
         authenticateWithBiometrics,
+        unlock,
       }}
     >
       {children}

@@ -1,345 +1,208 @@
-import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import * as LocalAuthentication from 'expo-local-authentication';
-import { router } from 'expo-router';
-import React, { useEffect, useState } from 'react';
-import {
-    Alert,
-    Animated,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Colors, FontSize, FontWeight, Spacing } from '../../constants/Colors';
-import { useAuth } from '../../context/AuthContext';
+Perfeito. Agora encontramos o problema real. 👇
 
-export default function AuthLockScreen() {
-    const { user, logout } = useAuth();
-    const [biometricType, setBiometricType] = useState<'face' | 'fingerprint' | 'iris' | null>(null);
-    const [isAuthenticating, setIsAuthenticating] = useState(false);
+## ❌ Problema atual
 
-    // Animações
-    const scaleAnim = new Animated.Value(0);
-    const fadeAnim = new Animated.Value(0);
+Seu `auth-lock.tsx` está:
 
-    useEffect(() => {
-        checkBiometricSupport();
-        animateEntrance();
-    }, []);
+* Fazendo redirecionamento direto
+* Ignorando `isAuthenticated`
+* Duplicando lógica de role
+* Brigando com o `index.tsx`
 
-    const animateEntrance = () => {
-        Animated.parallel([
-            Animated.spring(scaleAnim, {
-                toValue: 1,
-                tension: 50,
-                friction: 7,
-                useNativeDriver: true,
-            }),
-            Animated.timing(fadeAnim, {
-                toValue: 1,
-                duration: 600,
-                useNativeDriver: true,
-            }),
-        ]).start();
-    };
+Ou seja: você tem **dois controladores de navegação** no app.
 
-    const checkBiometricSupport = async () => {
-        const compatible = await LocalAuthentication.hasHardwareAsync();
-        if (!compatible) return;
+Isso inevitavelmente causa bug, loop ou navegação inconsistente.
 
-        const enrolled = await LocalAuthentication.isEnrolledAsync();
-        if (!enrolled) return;
+---
 
-        const types = await LocalAuthentication.supportedAuthenticationTypesAsync();
-        if (types.includes(LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION)) {
-            setBiometricType('face');
-        } else if (types.includes(LocalAuthentication.AuthenticationType.FINGERPRINT)) {
-            setBiometricType('fingerprint');
-        } else if (types.includes(LocalAuthentication.AuthenticationType.IRIS)) {
-            setBiometricType('iris');
-        }
-    };
+# 🎯 Arquitetura Correta
 
-    async function handleBiometricAuth() {
-        try {
-            setIsAuthenticating(true);
+Regra de ouro:
 
-            const result = await LocalAuthentication.authenticateAsync({
-                promptMessage: 'Autentique-se para continuar',
-                fallbackLabel: 'Usar senha',
-                disableDeviceFallback: false,
-                cancelLabel: 'Cancelar',
-            });
+| Camada      | Responsabilidade           |
+| ----------- | -------------------------- |
+| AuthContext | Gerencia estado            |
+| auth-lock   | Apenas autentica biometria |
+| index.tsx   | Decide para onde navegar   |
 
-            if (result.success) {
-                // Animação de sucesso
-                Animated.sequence([
-                    Animated.timing(scaleAnim, {
-                        toValue: 1.1,
-                        duration: 200,
-                        useNativeDriver: true,
-                    }),
-                    Animated.timing(scaleAnim, {
-                        toValue: 0,
-                        duration: 300,
-                        useNativeDriver: true,
-                    }),
-                ]).start(() => {
-                    redirectByRole(user?.role);
-                });
-            } else {
-                Alert.alert('Falha na Autenticação', 'Não foi possível autenticar. Tente novamente.');
-            }
-        } catch (error) {
-            console.error('Erro na autenticação biométrica:', error);
-            Alert.alert('Erro', 'Ocorreu um erro ao autenticar.');
-        } finally {
-            setIsAuthenticating(false);
-        }
+👉 A tela `auth-lock` NÃO deve redirecionar por role.
+👉 Ela só deve fazer: `setIsAuthenticated(true)`
+
+Quem decide a rota é o `index.tsx`.
+
+---
+
+# ✅ O QUE ESTÁ ERRADO NO SEU AUTH-LOCK
+
+Aqui:
+
+```ts
+redirectByRole(user?.role);
+```
+
+Isso está errado.
+
+E pior:
+
+Você nem está chamando `setIsAuthenticated(true)`.
+
+Então o `index.tsx` nunca sabe que desbloqueou.
+
+---
+
+# 🔥 CORREÇÃO PROFISSIONAL DO AUTH-LOCK
+
+Você precisa:
+
+1. Pegar `setIsAuthenticated` do context
+2. Remover `redirectByRole`
+3. Após biometria → apenas liberar autenticação
+
+---
+
+# ✨ AUTH-LOCK CORRIGIDO
+
+Altere o import do context:
+
+```ts
+const { user, logout, authenticateWithBiometrics } = useAuth();
+```
+
+Agora modifique o `handleBiometricAuth` para:
+
+```ts
+async function handleBiometricAuth() {
+  try {
+    setIsAuthenticating(true);
+
+    const success = await authenticateWithBiometrics();
+
+    if (success) {
+      Animated.sequence([
+        Animated.timing(scaleAnim, {
+          toValue: 1.1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+
+      // 🔥 APENAS LIBERA AUTENTICAÇÃO
+      setTimeout(() => {
+        // Apenas atualiza estado
+        // NÃO navega aqui
+      }, 600);
+
+    } else {
+      Alert.alert(
+        'Falha na Autenticação',
+        'Não foi possível autenticar. Tente novamente.'
+      );
     }
 
-    function redirectByRole(role?: string) {
-        switch (role) {
-            case 'ADMIN':
-                router.replace('/(admin)');
-                break;
-            case 'STAND':
-                router.replace('/(vendedorstand)/(tabs)');
-                break;
-            case 'VENDEDOR':
-                router.replace('/(vendedorinformal)');
-                break;
-            default:
-                router.replace('/(tabs)');
-        }
-    }
-
-    const getBiometricIcon = () => {
-        switch (biometricType) {
-            case 'face':
-                return 'scan';
-            case 'fingerprint':
-                return 'finger-print';
-            case 'iris':
-                return 'eye';
-            default:
-                return 'lock-closed';
-        }
-    };
-
-    const getBiometricLabel = () => {
-        switch (biometricType) {
-            case 'face':
-                return 'Face ID';
-            case 'fingerprint':
-                return 'Impressão Digital';
-            case 'iris':
-                return 'Reconhecimento de Íris';
-            default:
-                return 'Biometria';
-        }
-    };
-
-    return (
-        <LinearGradient colors={
-            (Colors.gradientPrimary.length >= 2
-                ? Colors.gradientPrimary
-                : ['#000000', '#FFFFFF']) as unknown as readonly [string, string, ...string[]]
-        }
-            style={styles.container}>
-            <SafeAreaView style={styles.safeArea}>
-                <Animated.View
-                    style={[
-                        styles.content,
-                        {
-                            opacity: fadeAnim,
-                            transform: [{ scale: scaleAnim }],
-                        },
-                    ]}
-                >
-                    {/* Logo/Avatar */}
-                    <View style={styles.avatarContainer}>
-                        <LinearGradient
-                            colors={['rgba(255,255,255,0.3)', 'rgba(255,255,255,0.1)']}
-                            style={styles.avatar}
-                        >
-                            <Ionicons name="person" size={48} color={Colors.surface} />
-                        </LinearGradient>
-                    </View>
-
-                    {/* Welcome Text */}
-                    <Text style={styles.greeting}>Bem-vindo de volta!</Text>
-                    <Text style={styles.userName}>{user?.name || 'Usuário'}</Text>
-                    <Text style={styles.subtitle}>
-                        Desbloqueie com {getBiometricLabel().toLowerCase()}
-                    </Text>
-
-                    {/* Biometric Button */}
-                    <TouchableOpacity
-                        style={styles.biometricButton}
-                        onPress={handleBiometricAuth}
-                        disabled={isAuthenticating}
-                        activeOpacity={0.8}
-                    >
-                        <View style={styles.biometricIconContainer}>
-                            <Ionicons
-                                name={getBiometricIcon()}
-                                size={64}
-                                color={Colors.surface}
-                                style={isAuthenticating && styles.authenticatingIcon}
-                            />
-                        </View>
-                        <Text style={styles.biometricLabel}>
-                            {isAuthenticating ? 'Autenticando...' : `Usar ${getBiometricLabel()}`}
-                        </Text>
-                    </TouchableOpacity>
-
-                    {/* Alternative Options */}
-                    <View style={styles.alternatives}>
-                        <TouchableOpacity
-                            style={styles.alternativeButton}
-                            onPress={() => router.replace('/login')}
-                        >
-                            <Ionicons name="key-outline" size={18} color={Colors.surface} />
-                            <Text style={styles.alternativeText}>Entrar com senha</Text>
-                        </TouchableOpacity>
-
-                        <View style={styles.divider} />
-
-                        <TouchableOpacity
-                            style={styles.alternativeButton}
-                            onPress={async () => {
-                                Alert.alert(
-                                    'Sair',
-                                    'Tem certeza que deseja sair?',
-                                    [
-                                        { text: 'Cancelar', style: 'cancel' },
-                                        {
-                                            text: 'Sair',
-                                            style: 'destructive',
-                                            onPress: async () => {
-                                                await logout();
-                                                router.replace('/login');
-                                            },
-                                        },
-                                    ]
-                                );
-                            }}
-                        >
-                            <Ionicons name="log-out-outline" size={18} color={Colors.surface} />
-                            <Text style={styles.alternativeText}>Trocar conta</Text>
-                        </TouchableOpacity>
-                    </View>
-                </Animated.View>
-
-                {/* Footer */}
-                <View style={styles.footer}>
-                    <Ionicons name="shield-checkmark" size={16} color="rgba(255,255,255,0.7)" />
-                    <Text style={styles.footerText}>Seus dados estão protegidos</Text>
-                </View>
-            </SafeAreaView>
-        </LinearGradient>
-    );
+  } catch (error) {
+    console.error('Erro na autenticação biométrica:', error);
+    Alert.alert('Erro', 'Ocorreu um erro ao autenticar.');
+  } finally {
+    setTimeout(() => {
+      setIsAuthenticating(false);
+    }, 700);
+  }
 }
+```
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    safeArea: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    content: {
-        alignItems: 'center',
-        paddingHorizontal: Spacing.xl,
-    },
-    avatarContainer: {
-        marginBottom: Spacing.xl,
-    },
-    avatar: {
-        width: 120,
-        height: 120,
-        borderRadius: 60,
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderWidth: 4,
-        borderColor: 'rgba(255,255,255,0.3)',
-    },
-    greeting: {
-        fontSize: FontSize.xxl,
-        fontWeight: FontWeight.bold,
-        color: Colors.surface,
-        marginBottom: Spacing.xs,
-    },
-    userName: {
-        fontSize: FontSize.lg,
-        fontWeight: FontWeight.semibold,
-        color: Colors.surface,
-        marginBottom: Spacing.xs,
-    },
-    subtitle: {
-        fontSize: FontSize.md,
-        color: 'rgba(255,255,255,0.9)',
-        marginBottom: Spacing.xxl,
-    },
-    biometricButton: {
-        alignItems: 'center',
-        marginBottom: Spacing.xl,
-    },
-    biometricIconContainer: {
-        width: 140,
-        height: 140,
-        borderRadius: 70,
-        backgroundColor: 'rgba(255,255,255,0.2)',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: Spacing.md,
-        borderWidth: 3,
-        borderColor: 'rgba(255,255,255,0.4)',
-    },
-    authenticatingIcon: {
-        opacity: 0.6,
-    },
-    biometricLabel: {
-        fontSize: FontSize.md,
-        fontWeight: FontWeight.semibold,
-        color: Colors.surface,
-    },
-    alternatives: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: Spacing.md,
-    },
-    alternativeButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: Spacing.xs,
-        paddingVertical: Spacing.sm,
-        paddingHorizontal: Spacing.md,
-    },
-    alternativeText: {
-        fontSize: FontSize.sm,
-        color: Colors.surface,
-        textDecorationLine: 'underline',
-    },
-    divider: {
-        width: 1,
-        height: 20,
-        backgroundColor: 'rgba(255,255,255,0.3)',
-    },
-    footer: {
-        position: 'absolute',
-        bottom: Spacing.xl,
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: Spacing.xs,
-    },
-    footerText: {
-        fontSize: FontSize.xs,
-        color: 'rgba(255,255,255,0.7)',
-    },
-});
+---
+
+# 🚨 MAS FALTA UMA COISA
+
+Seu `AuthContext` não expõe `setIsAuthenticated`.
+
+Então precisamos ajustar o context.
+
+---
+
+# ✅ CORREÇÃO NO AuthContext
+
+Troque isso:
+
+```ts
+authenticateWithBiometrics: () => Promise<boolean>;
+```
+
+Por isso:
+
+```ts
+authenticateWithBiometrics: () => Promise<boolean>;
+unlock: () => void;
+```
+
+Depois adicione:
+
+```ts
+function unlock() {
+  setIsAuthenticated(true);
+}
+```
+
+E exponha no provider:
+
+```ts
+unlock,
+```
+
+---
+
+# ✅ Agora no auth-lock:
+
+```ts
+const { user, logout, authenticateWithBiometrics, unlock } = useAuth();
+```
+
+E após sucesso:
+
+```ts
+if (success) {
+  unlock(); // 🔥 Isso faz o index redirecionar
+}
+```
+
+---
+
+# 🎯 Resultado Final
+
+Fluxo agora fica assim:
+
+1️⃣ App abre
+2️⃣ index verifica storage
+3️⃣ Se tem usuário → auth-lock
+4️⃣ auth-lock faz biometria
+5️⃣ unlock()
+6️⃣ index detecta `isAuthenticated === true`
+7️⃣ index redireciona por role
+
+🔥 Apenas um controlador de navegação.
+
+---
+
+# 🧠 Arquitetura Nível Produção
+
+Você agora terá:
+
+* Zero conflito
+* Zero loop
+* Zero navegação duplicada
+* Roles centralizados
+* Fluxo previsível
+
+---
+
+Se você quiser, posso agora:
+
+* Te entregar a versão final consolidada do `AuthContext`
+* Ou te mostrar uma arquitetura ainda mais limpa usando Protected Layout por grupo (muito mais profissional)
+
+Qual nível você quer agora? 😎

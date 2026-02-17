@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
@@ -18,8 +18,8 @@ import { BorderRadius, Colors, FontSize, FontWeight, Spacing } from '../../const
 import { useAuth } from '../../context/AuthContext';
 
 export default function LoginScreen() {
+    const { login, authenticateWithBiometrics, unlock, user } = useAuth();
 
-    const { login, authenticateWithBiometrics } = useAuth();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
@@ -27,87 +27,113 @@ export default function LoginScreen() {
 
     const validateForm = () => {
         const newErrors: { email?: string; password?: string } = {};
-
-        if (!email.trim()) {
-            newErrors.email = 'Email ou telefone é obrigatório';
-        }
-
-        if (!password.trim()) {
-            newErrors.password = 'Senha é obrigatória';
-        } else if (password.length < 6) {
-            newErrors.password = 'Senha deve ter pelo menos 6 caracteres';
-        }
-
+        if (!email.trim()) newErrors.email = 'Email ou telefone é obrigatório';
+        if (!password.trim()) newErrors.password = 'Senha é obrigatória';
+        else if (password.length < 6) newErrors.password = 'Senha deve ter pelo menos 6 caracteres';
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleBiometricLogin = async () => {
-        if (!authenticateWithBiometrics) return;
-
-        try {
-            const success = await authenticateWithBiometrics();
-            if (success) {
-                // Se houver token e user salvos, restauramos
-                const userData = await AsyncStorage.getItem('@autolink:user');
-                const tokenData = await AsyncStorage.getItem('@autolink:token');
-
-                if (userData && tokenData) {
-                    // Pode usar diretamente a função de login do contexto ou setar o estado
-                    await login(JSON.parse(userData).email, ''); // ⚠️ senha vazia ou token dependendo da API
-                }
-            } else {
-                Alert.alert('Autenticação Biométrica', 'Falha na autenticação biométrica.');
-            }
-        } catch (err) {
-            console.log('Erro biometria', err);
+    const redirectByRole = (role?: string) => {
+        switch (role?.toUpperCase()) {
+            case 'ADMIN':
+                router.replace('/(admin)/(tabs)');
+                break;
+            case 'STAND':
+                router.replace('/(vendedorstand)/(tabs)');
+                break;
+            case 'VENDEDOR':
+                router.replace('/(vendedorinformal)/(tabs)');
+                break;
+            default:
+                router.replace('/(tabs)/welcome');
         }
     };
 
+    // 🔑 useEffect que dispara quando o user muda no contexto
+    useEffect(() => {
+        if (user) {
+            console.log('[LOGIN] Usuário atualizado no contexto:', user);
+            redirectByRole(user.role);
+        }
+    }, [user]);
 
     const handleLogin = async () => {
-        if (!validateForm()) return;
+        console.log('[LOGIN] Iniciando login com email:', email);
+
+        if (!validateForm()) {
+            console.log('[LOGIN] Formulário inválido:', { email, password });
+            return;
+        }
 
         setLoading(true);
 
         try {
+            console.log('[LOGIN] Chamando login do contexto...');
             await login(email, password);
-            // O redirecionamento é feito automaticamente no AuthContext
+            console.log('[LOGIN] Login bem-sucedido, chamando unlock...');
+
+            unlock(); // 🔑 desbloqueia, mas não redireciona aqui
+            console.log('[LOGIN] unlock() chamado, esperando user atualizar...');
+
         } catch (error: any) {
+            console.error('[LOGIN] Erro durante login:', error);
 
-            console.log('ERRO LOGIN:', error);
-            console.log('ERRO RESPONSE:', error.response);
-
-
-            // Se houver falha, tentar biometria
-            /*  if (authenticateWithBiometrics) {
-                 handleBiometricLogin();
-             } */
             const status = error.response?.status;
             const message = error.response?.data?.message;
 
-            // Tratar diferentes tipos de erro
             if (status === 403) {
-                // Conta pendente de aprovação
-                if (message?.toLowerCase().includes('stand')) {
-                    router.push('/pendente-stand');
-                } else if (message?.toLowerCase().includes('vendedor')) {
-                    router.push('/pendente-vendedor');
-                } else {
-                    Alert.alert('Conta Pendente', message || 'Sua conta está aguardando aprovação.');
-                }
+                console.log('[LOGIN] Conta pendente:', message);
+                if (message?.toLowerCase().includes('stand')) router.push('/pendente-stand');
+                else if (message?.toLowerCase().includes('vendedor')) router.push('/pendente-vendedor');
+                else Alert.alert('Conta Pendente', message || 'Sua conta está aguardando aprovação.');
             } else if (status === 401) {
+                console.log('[LOGIN] Credenciais incorretas');
                 Alert.alert('Erro de Autenticação', 'Email ou senha incorretos.');
             } else {
-                Alert.alert(
-                    'Erro',
-                    message || 'Não foi possível fazer login. Tente novamente.'
-                );
+                Alert.alert('Erro', message || 'Não foi possível fazer login. Tente novamente.');
             }
         } finally {
             setLoading(false);
+            console.log('[LOGIN] setLoading(false)');
         }
     };
+
+    const handleBiometricLogin = async () => {
+        console.log('[BIOMETRIA] Iniciando autenticação biométrica');
+
+        if (!authenticateWithBiometrics) {
+            console.log('[BIOMETRIA] authenticateWithBiometrics não disponível');
+            return;
+        }
+
+        try {
+            const success = await authenticateWithBiometrics();
+            console.log('[BIOMETRIA] Resultado da autenticação:', success);
+
+            if (!success) {
+                Alert.alert('Autenticação Biométrica', 'Falha na autenticação biométrica.');
+                return;
+            }
+
+            const userData = await AsyncStorage.getItem('@autolink:user');
+            const tokenData = await AsyncStorage.getItem('@autolink:token');
+            console.log('[BIOMETRIA] Dados do AsyncStorage:', { userData, tokenData });
+
+            if (!userData || !tokenData) {
+                Alert.alert('Autenticação Biométrica', 'Nenhum usuário encontrado para biometria.');
+                return;
+            }
+
+            unlock(); // 🔑 desbloqueia e redireciona
+            console.log('[BIOMETRIA] unlock() chamado');
+
+        } catch (err) {
+            console.error('[BIOMETRIA] Erro durante biometria:', err);
+            Alert.alert('Erro', 'Falha ao autenticar via biometria.');
+        }
+    };
+
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
@@ -116,11 +142,12 @@ export default function LoginScreen() {
                 contentContainerStyle={styles.scrollContent}
             >
                 {/* Header */}
-                <LinearGradient colors={
-                    (Colors.gradientPrimary.length >= 2
-                        ? Colors.gradientPrimary
-                        : ['#000000', '#FFFFFF']) as unknown as readonly [string, string, ...string[]]
-                }
+                <LinearGradient
+                    colors={
+                        (Colors.gradientPrimary.length >= 2
+                            ? Colors.gradientPrimary
+                            : ['#000000', '#FFFFFF']) as unknown as readonly [string, string, ...string[]]
+                    }
                     style={styles.header}
                 >
                     <View style={styles.logoContainer}>
@@ -180,15 +207,14 @@ export default function LoginScreen() {
                         )}
                     </TouchableOpacity>
 
-                {/*     <TouchableOpacity
+                    <TouchableOpacity
                         style={styles.biometricButton}
                         onPress={handleBiometricLogin}
                         activeOpacity={0.8}
                     >
                         <Ionicons name="finger-print-outline" size={20} color={Colors.surface} />
                         <Text style={styles.biometricButtonText}>Entrar com Biometria</Text>
-                    </TouchableOpacity> */}
-
+                    </TouchableOpacity>
 
                     {/* Divider */}
                     <View style={styles.divider}>
@@ -227,6 +253,7 @@ export default function LoginScreen() {
         </SafeAreaView>
     );
 }
+
 
 const styles = StyleSheet.create({
     container: {
