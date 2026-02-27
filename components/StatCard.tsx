@@ -8,7 +8,7 @@ interface StatCardProps {
   value: string | number;
   label: string;
   color?: string;
-  trend?: string; // ex: "+12%" ou "-5%"
+  trend?: string;
   onPress?: () => void;
 }
 
@@ -25,17 +25,16 @@ export default function StatCard({
   const scaleValue = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    // Animação de entrada
     Animated.parallel([
       Animated.spring(scaleAnim, {
         toValue: 1,
-        tension: 40,
+        tension: 50,
         friction: 7,
         useNativeDriver: true,
       }),
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 600,
+        duration: 400,
         useNativeDriver: true,
       }),
     ]).start();
@@ -43,7 +42,7 @@ export default function StatCard({
 
   const handlePressIn = () => {
     Animated.spring(scaleValue, {
-      toValue: 0.95,
+      toValue: 0.96,
       useNativeDriver: true,
     }).start();
   };
@@ -70,6 +69,7 @@ export default function StatCard({
   return (
     <Animated.View
       style={[
+        styles.container,
         {
           opacity: fadeAnim,
           transform: [{ scale: scaleAnim }],
@@ -87,36 +87,35 @@ export default function StatCard({
             styles.card,
             {
               transform: [{ scale: scaleValue }],
+              borderLeftColor: color,
             },
           ]}
         >
-          {/* Icon with gradient background */}
+          {/* Icon */}
           <View style={[styles.iconWrapper, { backgroundColor: `${color}15` }]}>
-            <View style={[styles.iconInner, { backgroundColor: `${color}25` }]}>
-              <Ionicons name={icon} size={24} color={color} />
+            <Ionicons name={icon} size={20} color={color} />
+          </View>
+
+          {/* Content */}
+          <View style={styles.content}>
+            {/* Value & Trend */}
+            <View style={styles.valueRow}>
+              <Text style={styles.value}>{value}</Text>
+              {trend && (
+                <View style={[styles.trendBadge, { backgroundColor: `${getTrendColor()}15` }]}>
+                  <Ionicons name={getTrendIcon()!} size={10} color={getTrendColor()} />
+                  <Text style={[styles.trendText, { color: getTrendColor() }]}>
+                    {trend}
+                  </Text>
+                </View>
+              )}
             </View>
+
+            {/* Label */}
+            <Text style={styles.label} numberOfLines={1}>
+              {label}
+            </Text>
           </View>
-
-          {/* Value */}
-          <View style={styles.valueContainer}>
-            <Text style={styles.value}>{value}</Text>
-            {trend && (
-              <View style={[styles.trendBadge, { backgroundColor: `${getTrendColor()}15` }]}>
-                <Ionicons name={getTrendIcon()!} size={12} color={getTrendColor()} />
-                <Text style={[styles.trendText, { color: getTrendColor() }]}>
-                  {trend}
-                </Text>
-              </View>
-            )}
-          </View>
-
-          {/* Label */}
-          <Text style={styles.label} numberOfLines={2}>
-            {label}
-          </Text>
-
-          {/* Bottom accent */}
-          <View style={[styles.accent, { backgroundColor: color }]} />
         </Animated.View>
       </Pressable>
     </Animated.View>
@@ -124,73 +123,61 @@ export default function StatCard({
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    minWidth: '47%',
+    maxWidth: '50%',
+  },
   card: {
-    width: '100%',
     backgroundColor: Colors.surface,
-    padding: Spacing.lg,
-    borderRadius: BorderRadius.xl,
-    marginBottom: Spacing.md,
-    borderWidth: 1,
-    borderColor: '#f5f5f5',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  iconWrapper: {
-    width: 56,
-    height: 56,
-    borderRadius: 30,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: Spacing.md,
-  },
-  iconInner: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  valueContainer: {
+    padding: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    borderLeftWidth: 3,
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.sm,
-    marginBottom: Spacing.xs,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  iconWrapper: {
+    width: 40,
+    height: 40,
+    borderRadius: BorderRadius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  content: {
+    flex: 1,
+  },
+  valueRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    marginBottom: 2,
   },
   value: {
-    fontSize: 28,
+    fontSize: FontSize.xl,
     fontWeight: FontWeight.bold,
     color: Colors.text,
-    letterSpacing: -0.5,
   },
   trendBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 2,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: BorderRadius.sm,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    borderRadius: BorderRadius.xs,
   },
   trendText: {
-    fontSize: FontSize.xs,
+    fontSize: FontSize.xxs,
     fontWeight: FontWeight.bold,
   },
   label: {
-    fontSize: FontSize.sm,
+    fontSize: FontSize.xs,
     color: Colors.textSecondary,
-    lineHeight: 18,
-  },
-  accent: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 3,
-    borderBottomLeftRadius: BorderRadius.xl,
-    borderBottomRightRadius: BorderRadius.xl,
+    lineHeight: 14,
   },
 });

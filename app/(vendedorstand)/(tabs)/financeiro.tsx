@@ -10,6 +10,7 @@ import {
     View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import StatCard from '../../../components/StatCard'; // ✅ IMPORTAR
 import { BorderRadius, Colors, FontSize, FontWeight, Spacing } from '../../../constants/Colors';
 
 interface FinanceiroData {
@@ -30,7 +31,6 @@ interface Transacao {
     status: 'concluida' | 'pendente' | 'cancelada';
 }
 
-// Mock de dados - substitua pela sua API
 const MOCK_FINANCEIRO: FinanceiroData = {
     totalVendas: 15,
     vendasMes: 3,
@@ -65,22 +65,6 @@ const MOCK_TRANSACOES: Transacao[] = [
         data: new Date(2026, 1, 5),
         status: 'concluida',
     },
-    {
-        id: '4',
-        tipo: 'assinatura',
-        descricao: 'Plano Premium - Renovação',
-        valor: -5000,
-        data: new Date(2026, 1, 1),
-        status: 'concluida',
-    },
-    {
-        id: '5',
-        tipo: 'venda',
-        descricao: 'Mazda CX-5 2021',
-        valor: 1800000,
-        data: new Date(2026, 0, 28),
-        status: 'pendente',
-    },
 ];
 
 export default function FinanceiroScreen() {
@@ -91,7 +75,6 @@ export default function FinanceiroScreen() {
 
     const onRefresh = async () => {
         setRefreshing(true);
-        // Aqui você carregaria os dados da API
         setTimeout(() => setRefreshing(false), 1000);
     };
 
@@ -99,6 +82,7 @@ export default function FinanceiroScreen() {
         return value.toLocaleString('pt-MZ', {
             style: 'currency',
             currency: 'MZN',
+            maximumFractionDigits: 0,
         });
     };
 
@@ -124,11 +108,12 @@ export default function FinanceiroScreen() {
                 }
             >
                 {/* Header */}
-                <LinearGradient colors={
-                    (Colors.gradientPrimary.length >= 2
-                        ? Colors.gradientPrimary
-                        : ['#000000', '#FFFFFF']) as unknown as readonly [string, string, ...string[]]
-                }
+                <LinearGradient
+                    colors={
+                        (Colors.gradientPrimary.length >= 2
+                            ? Colors.gradientPrimary
+                            : ['#000000', '#FFFFFF']) as unknown as readonly [string, string, ...string[]]
+                    }
                     style={styles.header}
                 >
                     <View style={styles.headerContent}>
@@ -153,78 +138,60 @@ export default function FinanceiroScreen() {
 
                 {/* Period Selector */}
                 <View style={styles.periodSelector}>
-                    <TouchableOpacity
-                        style={[styles.periodButton, selectedPeriod === 'mes' && styles.periodButtonActive]}
-                        onPress={() => setSelectedPeriod('mes')}
-                    >
-                        <Text
+                    {['mes', 'trimestre', 'ano'].map((period) => (
+                        <TouchableOpacity
+                            key={period}
                             style={[
-                                styles.periodButtonText,
-                                selectedPeriod === 'mes' && styles.periodButtonTextActive,
+                                styles.periodButton,
+                                selectedPeriod === period && styles.periodButtonActive,
                             ]}
+                            onPress={() => setSelectedPeriod(period as any)}
                         >
-                            Mês
-                        </Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={[
-                            styles.periodButton,
-                            selectedPeriod === 'trimestre' && styles.periodButtonActive,
-                        ]}
-                        onPress={() => setSelectedPeriod('trimestre')}
-                    >
-                        <Text
-                            style={[
-                                styles.periodButtonText,
-                                selectedPeriod === 'trimestre' && styles.periodButtonTextActive,
-                            ]}
-                        >
-                            Trimestre
-                        </Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={[styles.periodButton, selectedPeriod === 'ano' && styles.periodButtonActive]}
-                        onPress={() => setSelectedPeriod('ano')}
-                    >
-                        <Text
-                            style={[
-                                styles.periodButtonText,
-                                selectedPeriod === 'ano' && styles.periodButtonTextActive,
-                            ]}
-                        >
-                            Ano
-                        </Text>
-                    </TouchableOpacity>
+                            <Text
+                                style={[
+                                    styles.periodButtonText,
+                                    selectedPeriod === period && styles.periodButtonTextActive,
+                                ]}
+                            >
+                                {period === 'mes' ? 'Mês' : period === 'trimestre' ? 'Trimestre' : 'Ano'}
+                            </Text>
+                        </TouchableOpacity>
+                    ))}
                 </View>
 
-                {/* Stats Grid */}
-                <View style={styles.statsGrid}>
-                    <StatCard
-                        icon="cart"
-                        label="Vendas Totais"
-                        value={data.totalVendas.toString()}
-                        color={Colors.success}
-                    />
-                    <StatCard
-                        icon="trending-up"
-                        label="Vendas (mês)"
-                        value={data.vendasMes.toString()}
-                        color={Colors.primary}
-                    />
-                    <StatCard
-                        icon="car-sport"
-                        label="Carros Ativos"
-                        value={data.carrosAtivos.toString()}
-                        color={Colors.info}
-                    />
-                    <StatCard
-                        icon="eye"
-                        label="Visualizações"
-                        value={data.visualizacoes.toString()}
-                        color={Colors.warning}
-                    />
+                {/* Stats Grid - USANDO StatCard ✨ */}
+                <View style={styles.statsContainer}>
+                    <View style={styles.statsGrid}>
+                        <StatCard
+                            icon="cart"
+                            label="Vendas Totais"
+                            value={data.totalVendas.toString()}
+                            color={Colors.success}
+                            trend="+12%"
+                        />
+                        <StatCard
+                            icon="trending-up"
+                            label="Vendas (mês)"
+                            value={data.vendasMes.toString()}
+                            color={Colors.primary}
+                            trend="+23%"
+                        />
+                        <StatCard
+                            icon="car-sport"
+                            label="Carros Ativos"
+                            value={data.carrosAtivos.toString()}
+                            color={Colors.info}
+                            trend="+5%"
+                        />
+                        <StatCard
+                            icon="eye"
+                            label="Visualizações"
+                            value={data.visualizacoes.toString()}
+                            color={Colors.warning}
+                            trend="+18%"
+                        />
+                    </View>
+
                 </View>
 
                 {/* Chart Section */}
@@ -302,31 +269,11 @@ export default function FinanceiroScreen() {
 
                 <View style={{ height: 40 }} />
             </ScrollView>
-        </SafeAreaView >
+        </SafeAreaView>
     );
 }
 
-function StatCard({
-    icon,
-    label,
-    value,
-    color,
-}: {
-    icon: keyof typeof Ionicons.glyphMap;
-    label: string;
-    value: string;
-    color: string;
-}) {
-    return (
-        <View style={styles.statCard}>
-            <View style={[styles.statIcon, { backgroundColor: `${color}20` }]}>
-                <Ionicons name={icon} size={24} color={color} />
-            </View>
-            <Text style={styles.statValue}>{value}</Text>
-            <Text style={styles.statLabel}>{label}</Text>
-        </View>
-    );
-}
+// ❌ REMOVER função StatCard inline
 
 const styles = StyleSheet.create({
     container: {
@@ -408,39 +355,18 @@ const styles = StyleSheet.create({
     periodButtonTextActive: {
         color: Colors.surface,
     },
+    /*     statsGrid: {
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            padding: Spacing.md,
+            gap: Spacing.sm,
+        }, */
     statsGrid: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        padding: Spacing.md,
         gap: Spacing.sm,
     },
-    statCard: {
-        flex: 1,
-        minWidth: '47%',
-        backgroundColor: Colors.surface,
-        padding: Spacing.md,
-        borderRadius: BorderRadius.lg,
-        alignItems: 'center',
-    },
-    statIcon: {
-        width: 48,
-        height: 48,
-        borderRadius: 24,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: Spacing.sm,
-    },
-    statValue: {
-        fontSize: FontSize.xxl,
-        fontWeight: FontWeight.bold,
-        color: Colors.text,
-    },
-    statLabel: {
-        fontSize: FontSize.xs,
-        color: Colors.textSecondary,
-        marginTop: Spacing.xs,
-        textAlign: 'center',
-    },
+    // ❌ REMOVER: statCard, statIcon, statValue, statLabel
     chartSection: {
         padding: Spacing.md,
     },
@@ -454,6 +380,9 @@ const styles = StyleSheet.create({
         fontSize: FontSize.lg,
         fontWeight: FontWeight.bold,
         color: Colors.text,
+    },
+    statsContainer: {
+        padding: Spacing.md,
     },
     viewAllText: {
         fontSize: FontSize.sm,

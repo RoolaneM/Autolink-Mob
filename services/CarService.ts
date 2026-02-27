@@ -1,6 +1,7 @@
+import axios from 'axios';
 import { api, uploadApi } from './api';
 
-const BASE_URL = 'http://192.168.1.105:3000'; // IP do backend
+const BASE_URL = 'http://10.1.2.113:3000'; // IP do backend
 
 export interface Car {
   categoria(categoria: any): unknown;
@@ -11,7 +12,7 @@ export interface Car {
   preco: number;
   quilometragem: number;
   imagemPrincipal: string | null;
-  status?: string;
+/*   status?: string; */
   views?: number;
   messages?: number;
   // Caso queira, pode incluir todas as imagens:
@@ -20,10 +21,32 @@ export interface Car {
 
   // NOVOS CAMPOS
   /*   categoria: string;  */     // Sedan, SUV, etc
-  destaque?: boolean;     // true se estiver em destaque
+  destaque?: boolean; 
+  
+  // novos// true se estiver em destaque
+
+  combustivel: string;
+  transmissao: string;
+  cor?: string;
+  descricao?: string;
+  cidade?: string;
+  status?: 'DISPONIVEL' | 'VENDIDO' | 'PAUSADO' | 'PUBLISHED'; // ✅ ADICIONAR
+  vendedor?: {
+    nome: string;
+    telefone?: string;
+    whatsapp?: string;
+  };
 }
 
+
+
 export class CarService {
+ /*  static markAsSold(carId: string) {
+    throw new Error('Method not implemented.');
+  }
+  static republishCar(carId: string) {
+    throw new Error('Method not implemented.');
+  } */
   // Carros do usuário logado
   static async getMyCars(): Promise<Car[]> {
     try {
@@ -105,5 +128,53 @@ export class CarService {
       console.error('Erro ao carregar todos os carros:', error);
       throw error;
     }
+  }
+
+  /**
+   * 🔥 MARCAR COMO VENDIDO (NOVO)
+   */
+  static async markAsSold(carId: string): Promise<void> {
+    const token = await SecureStore.getItemAsync('token');
+    await axios.patch(
+      `${BASE_URL}/cars/${carId}/sold`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+  }
+
+  /**
+   * 🔥 REPUBLICAR CARRO (NOVO)
+   */
+  static async republishCar(carId: string): Promise<void> {
+    const token = await SecureStore.getItemAsync('token');
+    await axios.put(
+      `${BASE_URL}/cars/${carId}/republish`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+  }
+
+  /**
+   * 🔥 PAUSAR ANÚNCIO (NOVO)
+   */
+  static async pauseCar(carId: string): Promise<void> {
+    const token = await SecureStore.getItemAsync('token');
+    await axios.patch(
+      `${BASE_URL}/cars/${carId}/pause`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
   }
 }

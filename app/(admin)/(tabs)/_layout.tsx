@@ -6,60 +6,60 @@ export default function AdminLayout() {
   return (
     <Tabs
       screenOptions={{
+        headerShown: false,
         tabBarActiveTintColor: Colors.primary,
         tabBarInactiveTintColor: Colors.textLight,
         tabBarStyle: {
           backgroundColor: Colors.surface,
           borderTopColor: Colors.border,
+          height: 60,
+          paddingBottom: 6,
         },
         tabBarLabelStyle: {
           fontSize: FontSize.xs,
         },
-        headerShown: false,
       }}
     >
+      {/* DASHBOARD */}
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Início',
+          title: 'Dashboard',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home" size={size} color={color} />
+            <Ionicons name="grid" size={size} color={color} />
           ),
         }}
       />
+
+      {/* USERS */}
       <Tabs.Screen
-        name="anuncios"
+        name="users"
         options={{
-          title: 'Meus Anúncios',
+          title: 'Usuários',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="car-sport" size={size} color={color} />
+            <Ionicons name="people" size={size} color={color} />
           ),
         }}
       />
+
+      {/* STANDS */}
       <Tabs.Screen
-        name="adicionar"
+        name="stands"
         options={{
-          title: 'Adicionar',
+          title: 'Stands',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="add-circle" size={size} color={color} />
+            <Ionicons name="business" size={size} color={color} />
           ),
         }}
       />
+
+      {/* VENDEDORES */}
       <Tabs.Screen
-        name="financeiro"
+        name="vendedores"
         options={{
-          title: 'Financeiro',
+          title: 'Vendedores',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="wallet" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="perfil"
-        options={{
-          title: 'Perfil',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person" size={size} color={color} />
+            <Ionicons name="person-circle" size={size} color={color} />
           ),
         }}
       />

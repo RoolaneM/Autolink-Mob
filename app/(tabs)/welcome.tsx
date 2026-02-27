@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import CarCard from '../../components/CarCard';
@@ -72,12 +72,12 @@ export default function HomeScreen() {
               <Text style={styles.headerTitle}>AutoLink MZ</Text>
             </View>
 
-            <TouchableOpacity
+       {/*      <TouchableOpacity
               style={styles.messageButton}
               onPress={() => router.push('/mensagem/chat')}
             >
               <Ionicons name="chatbubble-outline" size={24} color="#FFFFFF" />
-            </TouchableOpacity>
+            </TouchableOpacity> */}
           </View>
         </View>
       </LinearGradient>

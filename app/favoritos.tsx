@@ -3,9 +3,9 @@ import { useRouter } from 'expo-router';
 import React from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import CarCard from '../../components/CarCard';
-import { Colors, FontSize, FontWeight, Spacing } from '../../constants/Colors';
-import useCarStore from '../../store/useCarStore';
+import CarCard from '../components/CarCard';
+import { Colors, FontSize, FontWeight, Spacing } from '../constants/Colors';
+import useCarStore from '../store/useCarStore';
 
 export default function FavoritosScreen() {
   const router = useRouter();
